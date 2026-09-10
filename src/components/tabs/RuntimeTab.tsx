@@ -4,12 +4,15 @@ import { useRef } from "react";
 import { connectionSvgPaths } from "@/lib/connections";
 import { useScadaStore, useTagMap } from "@/lib/store";
 import { RenderWidget } from "@/components/widgets/registry";
+import { ObjectControlPopup } from "@/components/ObjectControlPopup";
 
 export function RuntimeTab() {
   const screens = useScadaStore((s) => s.screens);
   const runtimeScreenId = useScadaStore((s) => s.runtimeScreenId);
   const setRuntimeScreen = useScadaStore((s) => s.setRuntimeScreen);
   const writeTagValue = useScadaStore((s) => s.writeTagValue);
+  const setControlObjectId = useScadaStore((s) => s.setControlObjectId);
+  const controlObjectId = useScadaStore((s) => s.controlObjectId);
   const tagMap = useTagMap();
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +38,7 @@ export function RuntimeTab() {
         <div>
           <h1 className="panel-title tight">Runtime</h1>
           <p className="panel-desc tight">
-            Live operator view driven by simulation tags.
+            Live operator view — click any object to open its control popup.
           </p>
         </div>
         <div className="toolbar-actions">
@@ -76,12 +79,24 @@ export function RuntimeTab() {
           {screen.objects.map((obj) => (
             <div
               key={obj.id}
-              className="screen-object runtime"
+              role="button"
+              tabIndex={0}
+              className={`screen-object runtime clickable ${
+                controlObjectId === obj.id ? "control-open" : ""
+              }`}
               style={{
                 left: obj.x,
                 top: obj.y,
                 width: obj.width,
                 height: obj.height,
+              }}
+              title={`Control ${obj.name}`}
+              onClick={() => setControlObjectId(obj.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setControlObjectId(obj.id);
+                }
               }}
             >
               <RenderWidget
@@ -94,6 +109,8 @@ export function RuntimeTab() {
           ))}
         </div>
       </div>
+
+      <ObjectControlPopup />
     </div>
   );
 }

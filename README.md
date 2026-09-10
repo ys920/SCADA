@@ -17,11 +17,21 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Tab | What it does |
 |-----|----------------|
-| Library | Industrial templates (tank, valve, pump, gauges, PID faceplate, …) |
+| Library | 31 industrial templates + faceplates (tank, vessel, valves, pump, blower, compressor, HEX, reactor, conveyor, PID/motor/pump/valve/tank/VFD/temp/flow faces, …) |
 | Tags | Master tag list with live sim values and profile editors |
-| Designer | Create screens, place templates, bind tags, draw connections |
-| Runtime | Live operator view of screens |
+| Designer | Create screens, place templates, bind tags, draw orthogonal connections |
+| Runtime | Live operator view — five seeded demo screens |
 | OPC UA | Endpoint + security + node→tag mappings (simulated connect for now) |
+
+### Demo screens
+1. **Raw Water Intake** — left-to-right filter / pump / valve train  
+2. **Mixing Skid** — dual feed into reactor → product  
+3. **Boiler Loop** — recirculation with heat exchanger + controllers  
+4. **Packaging Line** — air train, conveyors, motor/VFD faces  
+5. **Faceplate Overview** — process strip + faceplate wall  
+
+Click **Reset** (or clear localStorage) after deploy to load the latest seed.
+
 
 ## Deploy on Vercel
 

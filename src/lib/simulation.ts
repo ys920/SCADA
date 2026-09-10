@@ -52,7 +52,7 @@ export function simulateTagValue(
 
 export function tickSimulation(tags: Tag[], now: number): Tag[] {
   return tags.map((tag) => {
-    if (tag.source !== "simulation" || !tag.sim) return tag;
+    if (tag.source !== "simulation" || !tag.sim || tag.manualHold) return tag;
     const next = simulateTagValue(tag, now);
     return {
       ...tag,
