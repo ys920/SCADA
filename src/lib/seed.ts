@@ -390,10 +390,10 @@ function screenIntake(): Screen {
     height: 720,
     objects: [
       obj(tankA, "tank", "TK-A", 80, 200, 130, 180, [{ prop: "level", tagId: "tag_tank_a" }]),
-      obj(filter, "filter", "F-01", 280, 270, 88, 72, [{ prop: "dp", tagId: "tag_filter_dp" }]),
-      obj(pump, "pump", "P-01", 430, 260, 100, 84, [{ prop: "running", tagId: "tag_pump_run" }]),
-      obj(check, "check-valve", "CV-01", 580, 278, 64, 56),
-      obj(valve, "valve", "XV-01", 700, 268, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
+      obj(filter, "filter", "F-01", 280, 263, 88, 72, [{ prop: "dp", tagId: "tag_filter_dp" }]),
+      obj(pump, "pump", "P-01", 430, 257, 100, 84, [{ prop: "running", tagId: "tag_pump_run" }]),
+      obj(check, "check-valve", "CV-01", 580, 271, 64, 56),
+      obj(valve, "valve", "XV-01", 700, 263, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
       obj(tankB, "tank", "TK-B", 860, 200, 130, 180, [{ prop: "level", tagId: "tag_tank_b" }]),
       obj(sid("obj_intake_pi"), "gauge", "PI-01", 430, 80, 110, 110, [{ prop: "value", tagId: "tag_pressure" }], { min: 0, max: 10, unit: "bar" }),
       obj(sid("obj_intake_fi"), "numeric", "Flow", 580, 100, 150, 56, [{ prop: "value", tagId: "tag_flow" }], { decimals: 1, unit: "m³/h" }),
@@ -435,16 +435,16 @@ function screenMixing(): Screen {
     height: 720,
     objects: [
       obj(ta, "tank", "RAW-A", 80, 80, 110, 150, [{ prop: "level", tagId: "tag_tank_a" }]),
-      obj(tb, "tank", "RAW-B", 80, 360, 110, 150, [{ prop: "level", tagId: "tag_tank_b" }]),
-      obj(va, "control-valve", "FV-A", 280, 120, 80, 96, [{ prop: "position", tagId: "tag_valve_pos" }]),
-      obj(vb, "control-valve", "FV-B", 280, 400, 80, 96, [{ prop: "position", tagId: "tag_pid_out" }]),
-      obj(reactor, "reactor", "R-101", 480, 220, 140, 170, [
+      obj(tb, "tank", "RAW-B", 80, 400, 110, 150, [{ prop: "level", tagId: "tag_tank_b" }]),
+      obj(va, "control-valve", "FV-A", 280, 100, 80, 96, [{ prop: "position", tagId: "tag_valve_pos" }]),
+      obj(vb, "control-valve", "FV-B", 280, 420, 80, 96, [{ prop: "position", tagId: "tag_pid_out" }]),
+      obj(reactor, "reactor", "R-101", 520, 220, 140, 170, [
         { prop: "level", tagId: "tag_reactor_lvl" },
         { prop: "temp", tagId: "tag_reactor_temp" },
         { prop: "agitating", tagId: "tag_agitator" },
       ]),
-      obj(outv, "valve", "XV-OUT", 720, 265, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
-      obj(tc, "tank", "PROD", 880, 220, 120, 170, [{ prop: "level", tagId: "tag_tank_c" }]),
+      obj(outv, "valve", "XV-OUT", 760, 269, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
+      obj(tc, "tank", "PROD", 920, 212, 120, 170, [{ prop: "level", tagId: "tag_tank_c" }]),
       obj(sid("obj_mix_tempface"), "temp-face", "TIC-101", 1080, 120, 170, 130, [
         { prop: "pv", tagId: "tag_reactor_temp" },
         { prop: "sp", tagId: "tag_temp_sp" },
