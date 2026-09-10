@@ -5,6 +5,7 @@ import { connectionSvgPaths } from "@/lib/connections";
 import { useScadaStore, useTagMap } from "@/lib/store";
 import { RenderWidget } from "@/components/widgets/registry";
 import { ObjectControlPopup } from "@/components/ObjectControlPopup";
+import { PipeLayer } from "@/components/PipeLayer";
 
 export function RuntimeTab() {
   const screens = useScadaStore((s) => s.screens);
@@ -69,12 +70,7 @@ export function RuntimeTab() {
             width={screen.width}
             height={screen.height}
           >
-            {connectionPaths.map((c) => (
-              <g key={c.id}>
-                <path d={c.d} className="conn-path live" />
-                <path d={c.d} className="conn-flow" />
-              </g>
-            ))}
+            <PipeLayer paths={connectionPaths} />
           </svg>
           {screen.objects.map((obj) => (
             <div

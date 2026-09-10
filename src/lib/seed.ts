@@ -201,18 +201,20 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
     }),
   ];
 
-  // 4 rows × 5 pumps
+const connections: Connection[] = [];
+
+  // 4 rows × 5 pumps — valve Y offset keeps port centers collinear with pump
   for (let i = 0; i < 20; i++) {
     const col = i % 5;
     const row = Math.floor(i / 5);
-    const x = 40 + col * 240;
+    const x = 40 + col * 248;
     const y = 100 + row * 140;
     const p = pumps[i];
     const v = valves[i];
     const pid = sid(`obj_pf_p_${i}`);
     const vid = sid(`obj_pf_v_${i}`);
     objects.push(fromInst(p, "pump", pid, x, y, 96, 80));
-    objects.push(fromInst(v, "valve", vid, x + 120, y + 8, 72, 72));
+    objects.push(fromInst(v, "valve", vid, x + 160, y + 4, 72, 72));
     objects.push(
       obj(
         sid(`obj_pf_btn_${i}`),
@@ -226,6 +228,7 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
         { label: "START" },
       ),
     );
+    connections.push(conn(`c_pf_${i}`, pid, "discharge", vid, "a"));
   }
 
   return {
@@ -234,7 +237,7 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
     width: 1280,
     height: 720,
     objects,
-    connections: [],
+    connections,
   };
 }
 
@@ -316,14 +319,14 @@ function screenProcessTrain(
         label: "PROCESS TRAIN — UDT-bound",
         fontSize: 22,
       }),
-      fromInst(t0, "tank", idTankA, 80, 180, 130, 180),
-      fromInst(f0, "filter", idFilter, 280, 250, 88, 72),
-      fromInst(p0, "pump", idPump, 430, 244, 100, 84),
-      fromInst(v0, "valve", idValve, 600, 250, 72, 72),
-      fromInst(t1, "tank", idTankB, 760, 180, 130, 180),
-      fromInst(fl0, "flow-face", sid("obj_pt_flow"), 980, 120, 170, 120),
-      fromInst(pumps[1], "pump-face", sid("obj_pt_pface"), 980, 280, 180, 140),
-      fromInst(t0, "tank-face", sid("obj_pt_tface"), 980, 450, 170, 150),
+      fromInst(t0, "tank", idTankA, 60, 191, 130, 180),
+      fromInst(f0, "filter", idFilter, 280, 254, 88, 72),
+      fromInst(p0, "pump", idPump, 450, 248, 100, 84),
+      fromInst(v0, "valve", idValve, 640, 254, 72, 72),
+      fromInst(t1, "tank", idTankB, 820, 191, 130, 180),
+      fromInst(fl0, "flow-face", sid("obj_pt_flow"), 1000, 120, 170, 120),
+      fromInst(pumps[1], "pump-face", sid("obj_pt_pface"), 1000, 280, 180, 140),
+      fromInst(t0, "tank-face", sid("obj_pt_tface"), 1000, 450, 170, 150),
       obj(
         sid("obj_pt_lamp"),
         "lamp",
@@ -389,9 +392,9 @@ function screenUtility(
       fromInst(compressors[0], "compressor", sid("obj_ut_k0"), 360, 100, 110, 90),
       fromInst(hexes[0], "heat-exchanger", sid("obj_ut_he0"), 520, 90, 150, 110),
       fromInst(hexes[1], "heat-exchanger", sid("obj_ut_he1"), 720, 90, 150, 110),
-      fromInst(conveyors[0], "conveyor", sid("obj_ut_c0"), 60, 320, 220, 56),
-      fromInst(conveyors[1], "conveyor", sid("obj_ut_c1"), 320, 320, 220, 56),
-      fromInst(conveyors[2], "conveyor", sid("obj_ut_c2"), 580, 320, 220, 56),
+      fromInst(conveyors[0], "conveyor", sid("obj_ut_c0"), 60, 320, 200, 56),
+      fromInst(conveyors[1], "conveyor", sid("obj_ut_c1"), 340, 320, 200, 56),
+      fromInst(conveyors[2], "conveyor", sid("obj_ut_c2"), 620, 320, 200, 56),
       fromInst(motors[0], "motor", sid("obj_ut_m0"), 60, 420, 110, 80),
       fromInst(motors[1], "motor", sid("obj_ut_m1"), 200, 420, 110, 80),
       fromInst(vfds[0], "vfd-face", sid("obj_ut_vfd0"), 980, 80, 180, 150),

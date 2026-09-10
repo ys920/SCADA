@@ -6,6 +6,7 @@ import { connectionSvgPaths } from "@/lib/connections";
 import { portPosition } from "@/lib/bindings";
 import { useScadaStore, useTagMap } from "@/lib/store";
 import { RenderWidget } from "@/components/widgets/registry";
+import { PipeLayer } from "@/components/PipeLayer";
 import type { ScreenObject } from "@/lib/types";
 
 export function DesignerTab() {
@@ -189,17 +190,11 @@ export function DesignerTab() {
             onPointerUp={endDrag}
           >
             <svg className="conn-layer" width={screen.width} height={screen.height}>
-              {connectionPaths.map((c) => (
-                <path
-                  key={c.id}
-                  d={c.d}
-                  className="conn-path"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (confirm("Delete connection?")) deleteConnection(c.id);
-                  }}
-                />
-              ))}
+              <PipeLayer
+                paths={connectionPaths}
+                interactive
+                onDelete={deleteConnection}
+              />
             </svg>
 
             {screen.objects.map((obj) => {
