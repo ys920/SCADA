@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { getLibraryItem } from "@/lib/library-catalog";
-import { portPosition } from "@/lib/bindings";
+import { connectionSvgPaths } from "@/lib/connections";
 import { useScadaStore, useTagMap } from "@/lib/store";
 import { RenderWidget } from "@/components/widgets/registry";
 
@@ -16,25 +15,7 @@ export function RuntimeTab() {
 
   const screen = screens.find((s) => s.id === runtimeScreenId) ?? screens[0];
 
-  const connectionPaths = !screen
-    ? []
-    : (screen.connections
-        .map((c) => {
-          const fromObj = screen.objects.find((o) => o.id === c.from.objectId);
-          const toObj = screen.objects.find((o) => o.id === c.to.objectId);
-          if (!fromObj || !toObj) return null;
-          const fromLib = getLibraryItem(fromObj.libraryItemId);
-          const toLib = getLibraryItem(toObj.libraryItemId);
-          const fromPort = fromLib?.ports.find((p) => p.id === c.from.portId);
-          const toPort = toLib?.ports.find((p) => p.id === c.to.portId);
-          if (!fromPort || !toPort) return null;
-          const a = portPosition(fromObj, fromPort.side, fromPort.offset);
-          const b = portPosition(toObj, toPort.side, toPort.offset);
-          const midX = (a.x + b.x) / 2;
-          const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
-          return { id: c.id, d };
-        })
-        .filter(Boolean) as { id: string; d: string }[]);
+  const connectionPaths = screen ? connectionSvgPaths(screen) : [];
 
   const enterFullscreen = () => {
     stageRef.current?.requestFullscreen?.();

@@ -595,8 +595,10 @@ select {
 
 .conn-path {
   fill: none;
-  stroke: #6f879f;
-  stroke-width: 2.5;
+  stroke: #7a92ab;
+  stroke-width: 3;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
   pointer-events: stroke;
   cursor: pointer;
   transition: stroke 150ms ease;
@@ -607,9 +609,9 @@ select {
 }
 
 .conn-path.live {
-  stroke: #7ea0b8;
-  stroke-dasharray: 6 4;
-  animation: flow 1.2s linear infinite;
+  stroke: #8aa4bc;
+  stroke-dasharray: 10 6;
+  animation: flow 1.4s linear infinite;
   pointer-events: none;
 }
 
