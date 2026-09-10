@@ -24,7 +24,7 @@ Open [http://localhost:3000](http://localhost:3000). Click **Reset** after upgra
 | Historian | SQL time-series query / manual flush |
 | OPC UA | Endpoint + mappings (sim connect for now) |
 
-## Plant seed (v5)
+## Plant seed (v6)
 
 - **20 pumps** (`P_01`…`P_20`) via PumpUDT  
 - **20 valves** (`XV_01`…`XV_20`) via ValveUDT  

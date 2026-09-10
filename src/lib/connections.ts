@@ -72,6 +72,7 @@ function orthogonalPoints(
 /**
  * Orthogonal path with rounded elbows (quadratic fillets).
  * Looks like industrial pipework instead of sharp miters.
+ * Stub length shrinks automatically on short hops so elbows stay clean.
  */
 export function orthogonalPath(
   ax: number,
@@ -80,9 +81,11 @@ export function orthogonalPath(
   bx: number,
   by: number,
   bSide: Side,
-  stub = 28,
+  stubMax = 28,
   radius = 14,
 ): string {
+  const gap = Math.hypot(bx - ax, by - ay);
+  const stub = Math.max(8, Math.min(stubMax, gap * 0.28));
   const pts = orthogonalPoints(ax, ay, aSide, bx, by, bSide, stub);
   if (pts.length < 2) return "";
 

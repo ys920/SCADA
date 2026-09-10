@@ -567,9 +567,24 @@ export function ConveyorWidget({ obj, tags }: WidgetProps) {
   const label = String(obj.props.label ?? obj.name);
   return (
     <div style={shellStyle()} className={`widget-conveyor ${running ? "is-running" : ""}`}>
-      <div className="conveyor-belt">
-        <div className="conveyor-dash" />
-      </div>
+      <svg viewBox="0 0 220 56" className="widget-svg" preserveAspectRatio="none">
+        <rect x="8" y="14" width="204" height="28" rx="10" fill="#1c2636" stroke="#9aafc2" strokeWidth="2" />
+        <rect x="16" y="20" width="188" height="16" rx="6" fill="#243146" />
+        <g className={running ? "conveyor-motion" : ""}>
+          <path
+            d="M24 28 H196"
+            fill="none"
+            stroke={running ? "#3ddc97" : "#5c6f88"}
+            strokeWidth="3"
+            strokeDasharray="10 8"
+            strokeLinecap="round"
+          />
+        </g>
+        <circle cx="22" cy="28" r="8" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <circle cx="198" cy="28" r="8" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <circle cx="22" cy="28" r="3" fill={running ? "#3ddc97" : "#6f849c"} />
+        <circle cx="198" cy="28" r="3" fill={running ? "#3ddc97" : "#6f849c"} />
+      </svg>
       <div className="widget-label">{label}</div>
     </div>
   );

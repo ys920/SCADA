@@ -24,7 +24,11 @@ const TABS: { id: AppTab; label: string; hint: string }[] = [
 
 function useHasHydrated() {
   return useSyncExternalStore(
-    (onStoreChange) => useScadaStore.persist.onFinishHydration(onStoreChange),
+    (onStoreChange) => {
+      const unsub = useScadaStore.persist.onFinishHydration(onStoreChange);
+      if (useScadaStore.persist.hasHydrated()) onStoreChange();
+      return unsub;
+    },
     () => useScadaStore.persist.hasHydrated(),
     () => false,
   );
