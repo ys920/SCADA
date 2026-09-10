@@ -3,8 +3,9 @@ import { getLibraryItem } from "./library-catalog";
 import { portPosition } from "./bindings";
 
 type Side = PortDef["side"];
+type Pt = { x: number; y: number };
 
-function stubOffset(side: Side, len: number): { x: number; y: number } {
+function stubOffset(side: Side, len: number): Pt {
   switch (side) {
     case "left":
       return { x: -len, y: 0 };
@@ -17,9 +18,60 @@ function stubOffset(side: Side, len: number): { x: number; y: number } {
   }
 }
 
+function round(n: number) {
+  return Math.round(n);
+}
+
+/** Build corner points for an orthogonal route (no fillets yet). */
+function orthogonalPoints(
+  ax: number,
+  ay: number,
+  aSide: Side,
+  bx: number,
+  by: number,
+  bSide: Side,
+  stub = 24,
+): Pt[] {
+  const aOff = stubOffset(aSide, stub);
+  const bOff = stubOffset(bSide, stub);
+  const a1 = { x: ax + aOff.x, y: ay + aOff.y };
+  const b1 = { x: bx + bOff.x, y: by + bOff.y };
+
+  const aHoriz = aSide === "left" || aSide === "right";
+  const bHoriz = bSide === "left" || bSide === "right";
+
+  let mid: Pt[];
+  if (aHoriz && bHoriz) {
+    const midX = (a1.x + b1.x) / 2;
+    mid = [
+      { x: midX, y: a1.y },
+      { x: midX, y: b1.y },
+    ];
+  } else if (!aHoriz && !bHoriz) {
+    const midY = (a1.y + b1.y) / 2;
+    mid = [
+      { x: a1.x, y: midY },
+      { x: b1.x, y: midY },
+    ];
+  } else if (aHoriz && !bHoriz) {
+    mid = [{ x: b1.x, y: a1.y }];
+  } else {
+    mid = [{ x: a1.x, y: b1.y }];
+  }
+
+  // Collapse near-duplicate points (straight runs)
+  const raw = [{ x: ax, y: ay }, a1, ...mid, b1, { x: bx, y: by }];
+  const pts: Pt[] = [];
+  for (const p of raw) {
+    const prev = pts[pts.length - 1];
+    if (!prev || Math.hypot(prev.x - p.x, prev.y - p.y) > 1.5) pts.push(p);
+  }
+  return pts;
+}
+
 /**
- * Orthogonal (P&ID-style) pipe path: exit perpendicular from each port,
- * then join with 90° elbows. Avoids curved “noodle” overlaps.
+ * Orthogonal path with rounded elbows (quadratic fillets).
+ * Looks like industrial pipework instead of sharp miters.
  */
 export function orthogonalPath(
   ax: number,
@@ -29,56 +81,57 @@ export function orthogonalPath(
   by: number,
   bSide: Side,
   stub = 28,
+  radius = 14,
 ): string {
-  const aOff = stubOffset(aSide, stub);
-  const bOff = stubOffset(bSide, stub);
-  const a1 = { x: ax + aOff.x, y: ay + aOff.y };
-  const b1 = { x: bx + bOff.x, y: by + bOff.y };
+  const pts = orthogonalPoints(ax, ay, aSide, bx, by, bSide, stub);
+  if (pts.length < 2) return "";
 
-  const aHoriz = aSide === "left" || aSide === "right";
-  const bHoriz = bSide === "left" || bSide === "right";
+  let d = `M ${round(pts[0].x)} ${round(pts[0].y)}`;
 
-  let mid: { x: number; y: number }[];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = pts[i - 1];
+    const cur = pts[i];
+    const next = pts[i + 1];
+    const inDx = cur.x - prev.x;
+    const inDy = cur.y - prev.y;
+    const outDx = next.x - cur.x;
+    const outDy = next.y - cur.y;
+    const inLen = Math.hypot(inDx, inDy) || 1;
+    const outLen = Math.hypot(outDx, outDy) || 1;
+    const r = Math.min(radius, inLen / 2, outLen / 2);
 
-  if (aHoriz && bHoriz) {
-    // Leave horizontally, drop/rise, then enter horizontally
-    const midX = (a1.x + b1.x) / 2;
-    mid = [
-      { x: midX, y: a1.y },
-      { x: midX, y: b1.y },
-    ];
-  } else if (!aHoriz && !bHoriz) {
-    // Leave vertically, jog sideways, then enter vertically
-    const midY = (a1.y + b1.y) / 2;
-    mid = [
-      { x: a1.x, y: midY },
-      { x: b1.x, y: midY },
-    ];
-  } else if (aHoriz && !bHoriz) {
-    // Horizontal out → vertical in
-    mid = [{ x: b1.x, y: a1.y }];
-  } else {
-    // Vertical out → horizontal in
-    mid = [{ x: a1.x, y: b1.y }];
+    // Skip fillet on colinear segments
+    const cross = inDx * outDy - inDy * outDx;
+    if (Math.abs(cross) < 0.01) {
+      d += ` L ${round(cur.x)} ${round(cur.y)}`;
+      continue;
+    }
+
+    const before = {
+      x: cur.x - (inDx / inLen) * r,
+      y: cur.y - (inDy / inLen) * r,
+    };
+    const after = {
+      x: cur.x + (outDx / outLen) * r,
+      y: cur.y + (outDy / outLen) * r,
+    };
+    d += ` L ${round(before.x)} ${round(before.y)}`;
+    d += ` Q ${round(cur.x)} ${round(cur.y)} ${round(after.x)} ${round(after.y)}`;
   }
 
-  const pts = [
-    { x: ax, y: ay },
-    a1,
-    ...mid,
-    b1,
-    { x: bx, y: by },
-  ];
-
-  return pts
-    .map((p, i) => `${i === 0 ? "M" : "L"} ${Math.round(p.x)} ${Math.round(p.y)}`)
-    .join(" ");
+  const last = pts[pts.length - 1];
+  d += ` L ${round(last.x)} ${round(last.y)}`;
+  return d;
 }
 
-/** Render solid pipe + optional animated flow overlay. */
-export function connectionSvgPaths(
-  screen: Screen,
-): { id: string; d: string }[] {
+export type PipePath = {
+  id: string;
+  d: string;
+  start: Pt;
+  end: Pt;
+};
+
+export function connectionSvgPaths(screen: Screen): PipePath[] {
   return screen.connections
     .map((c) => {
       const fromObj = screen.objects.find((o) => o.id === c.from.objectId);
@@ -94,9 +147,11 @@ export function connectionSvgPaths(
       return {
         id: c.id,
         d: orthogonalPath(a.x, a.y, fromPort.side, b.x, b.y, toPort.side),
+        start: a,
+        end: b,
       };
     })
-    .filter(Boolean) as { id: string; d: string }[];
+    .filter(Boolean) as PipePath[];
 }
 
 export function findPort(

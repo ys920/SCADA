@@ -26,10 +26,51 @@ export function TankWidget({ obj, tags }: WidgetProps) {
   const label = String(obj.props.label ?? obj.name);
   return (
     <div style={shellStyle()} className="widget-tank">
-      <div className="tank-body">
-        <div className="tank-fill" style={{ height: `${pct}%` }} />
-        <span className="tank-pct">{pct.toFixed(0)}%</span>
-      </div>
+      <svg viewBox="0 0 120 160" className="widget-svg tall" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`tankLiq-${obj.id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#5cf0b0" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#1a7a52" stopOpacity="0.95" />
+          </linearGradient>
+          <linearGradient id={`tankShell-${obj.id}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#2a3648" />
+            <stop offset="35%" stopColor="#3d4f66" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </linearGradient>
+        </defs>
+        {/* shell */}
+        <rect x="18" y="22" width="84" height="118" rx="8" fill={`url(#tankShell-${obj.id})`} stroke="#9aafc2" strokeWidth="2.5" />
+        {/* dome */}
+        <ellipse cx="60" cy="24" rx="42" ry="12" fill="#3d4f66" stroke="#9aafc2" strokeWidth="2.5" />
+        {/* liquid clip */}
+        <clipPath id={`tankClip-${obj.id}`}>
+          <rect x="22" y="28" width="76" height="108" rx="4" />
+        </clipPath>
+        <g clipPath={`url(#tankClip-${obj.id})`}>
+          <rect
+            x="22"
+            y={28 + 108 * (1 - pct / 100)}
+            width="76"
+            height={108 * (pct / 100)}
+            fill={`url(#tankLiq-${obj.id})`}
+          />
+          <rect
+            x="22"
+            y={28 + 108 * (1 - pct / 100)}
+            width="76"
+            height="3"
+            fill="rgba(255,255,255,0.35)"
+          />
+        </g>
+        {/* nozzles */}
+        <rect x="54" y="8" width="12" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="98" y="85" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="8" y="85" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="54" y="138" width="12" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <text x="60" y="90" textAnchor="middle" className="svg-text tank-pct-svg">
+          {pct.toFixed(0)}%
+        </text>
+      </svg>
       <div className="widget-label">{label}</div>
     </div>
   );
@@ -39,23 +80,29 @@ export function ValveWidget({ obj, tags }: WidgetProps) {
   const open = asBool(boundValue(obj, "open", tags, false));
   const pos = asNumber(boundValue(obj, "position", tags, open ? 100 : 0), 0);
   const label = String(obj.props.label ?? obj.name);
+  const active = open || pos > 5;
   return (
-    <div style={shellStyle()} className={`widget-valve ${open || pos > 5 ? "is-open" : ""}`}>
+    <div style={shellStyle()} className={`widget-valve ${active ? "is-open" : ""}`}>
       <svg viewBox="0 0 72 72" className="widget-svg">
-        <line x1="4" y1="36" x2="24" y2="36" stroke="currentColor" strokeWidth="4" />
-        <line x1="48" y1="36" x2="68" y2="36" stroke="currentColor" strokeWidth="4" />
+        {/* pipe stubs */}
+        <rect x="2" y="31" width="18" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="52" y="31" width="18" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        {/* body */}
         <polygon
-          points="24,20 48,36 24,52"
-          fill={open || pos > 5 ? "var(--signal)" : "var(--steel-3)"}
-          stroke="var(--steel-1)"
+          points="20,22 36,36 20,50"
+          fill={active ? "#2bb87a" : "#2a3648"}
+          stroke="#9aafc2"
           strokeWidth="2"
         />
         <polygon
-          points="48,20 24,36 48,52"
-          fill={open || pos > 5 ? "var(--signal)" : "var(--steel-3)"}
-          stroke="var(--steel-1)"
+          points="52,22 36,36 52,50"
+          fill={active ? "#2bb87a" : "#2a3648"}
+          stroke="#9aafc2"
           strokeWidth="2"
         />
+        {/* stem + actuator */}
+        <rect x="33" y="10" width="6" height="26" rx="1" fill="#5c6f88" />
+        <rect x="26" y="6" width="20" height="10" rx="3" fill="#f0b429" stroke="#c48a12" strokeWidth="1" />
       </svg>
       <div className="widget-label">{label}</div>
     </div>
@@ -68,27 +115,31 @@ export function PumpWidget({ obj, tags }: WidgetProps) {
   return (
     <div style={shellStyle()} className={`widget-pump ${running ? "is-running" : ""}`}>
       <svg viewBox="0 0 96 80" className="widget-svg">
+        <defs>
+          <radialGradient id={`pumpGrad-${obj.id}`} cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#4a5d75" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </radialGradient>
+        </defs>
+        {/* flanges */}
+        <rect x="2" y="34" width="18" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="76" y="34" width="18" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        {/* casing */}
         <circle
           cx="48"
           cy="40"
-          r="26"
-          fill="var(--steel-3)"
-          stroke={running ? "var(--signal)" : "var(--steel-1)"}
-          strokeWidth="3"
+          r="28"
+          fill={`url(#pumpGrad-${obj.id})`}
+          stroke={running ? "#3ddc97" : "#9aafc2"}
+          strokeWidth="2.5"
         />
-        <circle
-          cx="48"
-          cy="40"
-          r="10"
-          className={running ? "pump-rotor" : ""}
-          fill={running ? "var(--signal)" : "var(--steel-2)"}
-        />
-        <path
-          d="M74 40 H90 M6 40 H22"
-          stroke="currentColor"
-          strokeWidth="4"
-          fill="none"
-        />
+        <circle cx="48" cy="40" r="18" fill="none" stroke="#5c6f88" strokeWidth="1.5" />
+        {/* impeller */}
+        <g className={running ? "pump-rotor" : ""} style={{ transformOrigin: "48px 40px" }}>
+          <path d="M48 24 L54 40 L48 56 L42 40 Z" fill={running ? "#3ddc97" : "#6f849c"} />
+          <path d="M32 40 L48 34 L64 40 L48 46 Z" fill={running ? "#2bb87a" : "#5c6f88"} opacity="0.85" />
+        </g>
+        <circle cx="48" cy="40" r="5" fill={running ? "#a8ffd4" : "#8fa0b8"} />
       </svg>
       <div className="widget-label">{label}</div>
     </div>
@@ -101,13 +152,33 @@ export function MotorWidget({ obj, tags }: WidgetProps) {
   const label = String(obj.props.label ?? obj.name);
   return (
     <div style={shellStyle()} className={`widget-motor ${running ? "is-running" : ""}`}>
-      <div className="motor-block">
-        <span className="motor-dot" />
-        <div>
-          <div className="widget-label tight">{label}</div>
-          <div className="mono-readout">{speed.toFixed(0)} rpm</div>
-        </div>
-      </div>
+      <svg viewBox="0 0 120 80" className="widget-svg">
+        <defs>
+          <linearGradient id={`mtrShell-${obj.id}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#4a5d75" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </linearGradient>
+        </defs>
+        <rect x="18" y="18" width="70" height="44" rx="8" fill={`url(#mtrShell-${obj.id})`} stroke="#9aafc2" strokeWidth="2" />
+        <rect x="28" y="26" width="50" height="8" rx="2" fill="#2a3648" />
+        <rect x="28" y="46" width="50" height="8" rx="2" fill="#2a3648" />
+        <circle
+          cx="96"
+          cy="40"
+          r="14"
+          fill="#243146"
+          stroke={running ? "#3ddc97" : "#9aafc2"}
+          strokeWidth="2"
+        />
+        <g className={running ? "pump-rotor" : ""} style={{ transformOrigin: "96px 40px" }}>
+          <path d="M96 30 L100 40 L96 50 L92 40 Z" fill={running ? "#3ddc97" : "#6f849c"} />
+        </g>
+        <circle cx="28" cy="40" r="5" fill={running ? "#3ddc97" : "#5c6f88"} />
+        <text x="53" y="72" textAnchor="middle" className="svg-text">
+          {speed.toFixed(0)} rpm
+        </text>
+      </svg>
+      <div className="widget-label">{label}</div>
     </div>
   );
 }
@@ -274,10 +345,37 @@ export function VesselWidget({ obj, tags }: WidgetProps) {
   const label = String(obj.props.label ?? obj.name);
   return (
     <div style={shellStyle()} className="widget-vessel">
-      <div className="vessel-body">
-        <div className="vessel-fill" style={{ width: `${pct}%` }} />
-        <span className="tank-pct">{pct.toFixed(0)}%</span>
-      </div>
+      <svg viewBox="0 0 180 90" className="widget-svg" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`vesShell-${obj.id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3d4f66" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </linearGradient>
+          <linearGradient id={`vesLiq-${obj.id}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#1a7a52" />
+            <stop offset="100%" stopColor="#5cf0b0" />
+          </linearGradient>
+          <clipPath id={`vesClip-${obj.id}`}>
+            <ellipse cx="90" cy="45" rx="78" ry="28" />
+          </clipPath>
+        </defs>
+        <ellipse cx="90" cy="45" rx="80" ry="30" fill={`url(#vesShell-${obj.id})`} stroke="#9aafc2" strokeWidth="2.5" />
+        <g clipPath={`url(#vesClip-${obj.id})`}>
+          <rect
+            x="12"
+            y="17"
+            width={156 * (pct / 100)}
+            height="56"
+            fill={`url(#vesLiq-${obj.id})`}
+            opacity="0.85"
+          />
+        </g>
+        <rect x="2" y="40" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="164" y="40" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <text x="90" y="50" textAnchor="middle" className="svg-text tank-pct-svg" style={{ fontSize: 14 }}>
+          {pct.toFixed(0)}%
+        </text>
+      </svg>
       <div className="widget-label">{label}</div>
     </div>
   );
@@ -287,32 +385,27 @@ export function ControlValveWidget({ obj, tags }: WidgetProps) {
   const pos = asNumber(boundValue(obj, "position", tags, 0), 0);
   const label = String(obj.props.label ?? obj.name);
   const open = pos > 5;
+  const stemY = 14 + (1 - Math.min(1, Math.max(0, pos / 100))) * 26;
   return (
     <div style={shellStyle()} className={`widget-cvalve ${open ? "is-open" : ""}`}>
       <svg viewBox="0 0 80 96" className="widget-svg">
-        <line x1="4" y1="62" x2="28" y2="62" stroke="currentColor" strokeWidth="4" />
-        <line x1="52" y1="62" x2="76" y2="62" stroke="currentColor" strokeWidth="4" />
+        <rect x="2" y="56" width="18" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="60" y="56" width="18" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
         <polygon
-          points="28,48 52,62 28,76"
-          fill={open ? "var(--signal)" : "var(--steel-3)"}
-          stroke="var(--steel-1)"
+          points="20,48 40,62 20,76"
+          fill={open ? "#2bb87a" : "#2a3648"}
+          stroke="#9aafc2"
           strokeWidth="2"
         />
         <polygon
-          points="52,48 28,62 52,76"
-          fill={open ? "var(--signal)" : "var(--steel-3)"}
-          stroke="var(--steel-1)"
+          points="60,48 40,62 60,76"
+          fill={open ? "#2bb87a" : "#2a3648"}
+          stroke="#9aafc2"
           strokeWidth="2"
         />
-        <rect x="36" y="12" width="8" height="36" rx="2" fill="var(--steel-2)" />
-        <rect
-          x="28"
-          y={12 + (1 - Math.min(1, Math.max(0, pos / 100))) * 28}
-          width="24"
-          height="10"
-          rx="2"
-          fill="var(--amber)"
-        />
+        <rect x="37" y="18" width="6" height="44" rx="1" fill="#5c6f88" />
+        <rect x="24" y="4" width="32" height="16" rx="4" fill="#243146" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="28" y={stemY} width="24" height="9" rx="2" fill="#f0b429" stroke="#c48a12" strokeWidth="1" />
       </svg>
       <div className="widget-label">{label} {pos.toFixed(0)}%</div>
     </div>
@@ -323,11 +416,12 @@ export function CheckValveWidget({ obj }: WidgetProps) {
   const label = String(obj.props.label ?? obj.name);
   return (
     <div style={shellStyle()} className="widget-check">
-      <svg viewBox="0 0 64 56" className="widget-svg">
-        <line x1="4" y1="28" x2="20" y2="28" stroke="currentColor" strokeWidth="4" />
-        <line x1="44" y1="28" x2="60" y2="28" stroke="currentColor" strokeWidth="4" />
-        <polygon points="20,14 44,28 20,42" fill="var(--steel-3)" stroke="var(--steel-1)" strokeWidth="2" />
-        <line x1="44" y1="14" x2="44" y2="42" stroke="var(--steel-1)" strokeWidth="3" />
+      <svg viewBox="0 0 72 56" className="widget-svg">
+        <rect x="2" y="23" width="16" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="54" y="23" width="16" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <polygon points="18,14 46,28 18,42" fill="#2a3648" stroke="#9aafc2" strokeWidth="2" />
+        <line x1="46" y1="14" x2="46" y2="42" stroke="#9aafc2" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="46" cy="28" r="3" fill="#f0b429" />
       </svg>
       <div className="widget-label">{label}</div>
     </div>
@@ -340,22 +434,28 @@ export function BlowerWidget({ obj, tags }: WidgetProps) {
   return (
     <div style={shellStyle()} className={`widget-blower ${running ? "is-running" : ""}`}>
       <svg viewBox="0 0 100 88" className="widget-svg">
+        <defs>
+          <radialGradient id={`blwGrad-${obj.id}`} cx="40%" cy="35%" r="65%">
+            <stop offset="0%" stopColor="#4a5d75" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </radialGradient>
+        </defs>
+        <rect x="2" y="38" width="16" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="82" y="38" width="16" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
         <ellipse
           cx="50"
           cy="44"
           rx="30"
           ry="28"
-          fill="var(--steel-3)"
-          stroke={running ? "var(--signal)" : "var(--steel-1)"}
-          strokeWidth="3"
+          fill={`url(#blwGrad-${obj.id})`}
+          stroke={running ? "#3ddc97" : "#9aafc2"}
+          strokeWidth="2.5"
         />
-        <path
-          className={running ? "pump-rotor" : ""}
-          d="M50 20 L58 44 L50 68 L42 44 Z"
-          fill={running ? "var(--signal)" : "var(--steel-2)"}
-          style={{ transformOrigin: "50px 44px" }}
-        />
-        <path d="M8 44 H20 M80 44 H92" stroke="currentColor" strokeWidth="4" />
+        <g className={running ? "pump-rotor" : ""} style={{ transformOrigin: "50px 44px" }}>
+          <path d="M50 20 L58 44 L50 68 L42 44 Z" fill={running ? "#3ddc97" : "#6f849c"} />
+          <path d="M26 44 L50 36 L74 44 L50 52 Z" fill={running ? "#2bb87a" : "#5c6f88"} opacity="0.85" />
+        </g>
+        <circle cx="50" cy="44" r="5" fill={running ? "#a8ffd4" : "#8fa0b8"} />
       </svg>
       <div className="widget-label">{label}</div>
     </div>
@@ -368,13 +468,33 @@ export function CompressorWidget({ obj, tags }: WidgetProps) {
   const label = String(obj.props.label ?? obj.name);
   return (
     <div style={shellStyle()} className={`widget-compressor ${running ? "is-running" : ""}`}>
-      <div className="comp-body">
-        <span className={`motor-dot ${running ? "on" : ""}`} />
-        <div>
-          <div className="widget-label tight">{label}</div>
-          <div className="mono-readout">{load.toFixed(0)}% load</div>
-        </div>
-      </div>
+      <svg viewBox="0 0 120 90" className="widget-svg">
+        <defs>
+          <linearGradient id={`cmpShell-${obj.id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4a5d75" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </linearGradient>
+        </defs>
+        <rect x="2" y="40" width="16" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="102" y="40" width="16" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect
+          x="20"
+          y="22"
+          width="80"
+          height="48"
+          rx="10"
+          fill={`url(#cmpShell-${obj.id})`}
+          stroke={running ? "#3ddc97" : "#9aafc2"}
+          strokeWidth="2.5"
+        />
+        <rect x="32" y="34" width="20" height="24" rx="3" fill="#2a3648" stroke="#5c6f88" strokeWidth="1" />
+        <rect x="58" y="34" width="20" height="24" rx="3" fill="#2a3648" stroke="#5c6f88" strokeWidth="1" />
+        <circle cx="90" cy="46" r="8" fill={running ? "#3ddc97" : "#5c6f88"} />
+        <text x="60" y="84" textAnchor="middle" className="svg-text">
+          {load.toFixed(0)}% load
+        </text>
+      </svg>
+      <div className="widget-label">{label}</div>
     </div>
   );
 }
@@ -385,11 +505,21 @@ export function HeatExchangerWidget({ obj, tags }: WidgetProps) {
   return (
     <div style={shellStyle()} className="widget-hex">
       <svg viewBox="0 0 140 100" className="widget-svg">
-        <rect x="20" y="18" width="100" height="64" rx="8" fill="var(--steel-3)" stroke="var(--steel-1)" strokeWidth="2" />
-        <path d="M30 30 Q70 50 110 30" fill="none" stroke="var(--amber)" strokeWidth="2.5" />
-        <path d="M30 50 Q70 70 110 50" fill="none" stroke="var(--signal)" strokeWidth="2.5" />
-        <path d="M30 70 Q70 50 110 70" fill="none" stroke="var(--amber)" strokeWidth="2.5" />
-        <text x="70" y="92" textAnchor="middle" className="svg-text">
+        <defs>
+          <linearGradient id={`hexShell-${obj.id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#3d4f66" />
+            <stop offset="100%" stopColor="#1c2636" />
+          </linearGradient>
+        </defs>
+        <rect x="4" y="28" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="4" y="58" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="122" y="28" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="122" y="58" width="14" height="10" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="20" y="16" width="100" height="64" rx="10" fill={`url(#hexShell-${obj.id})`} stroke="#9aafc2" strokeWidth="2.5" />
+        <path d="M32 28 Q70 48 108 28" fill="none" stroke="#f0b429" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M32 48 Q70 68 108 48" fill="none" stroke="#3ddc97" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M32 68 Q70 48 108 68" fill="none" stroke="#f0b429" strokeWidth="2.5" strokeLinecap="round" />
+        <text x="70" y="94" textAnchor="middle" className="svg-text">
           {duty.toFixed(0)}%
         </text>
       </svg>
@@ -404,12 +534,11 @@ export function FilterWidget({ obj, tags }: WidgetProps) {
   return (
     <div style={shellStyle()} className="widget-filter">
       <svg viewBox="0 0 88 72" className="widget-svg">
-        <line x1="4" y1="36" x2="22" y2="36" stroke="currentColor" strokeWidth="4" />
-        <line x1="66" y1="36" x2="84" y2="36" stroke="currentColor" strokeWidth="4" />
-        <rect x="22" y="14" width="44" height="44" rx="6" fill="var(--steel-3)" stroke="var(--steel-1)" strokeWidth="2" />
-        <line x1="30" y1="22" x2="58" y2="50" stroke="var(--amber)" strokeWidth="2" />
-        <line x1="30" y1="30" x2="58" y2="58" stroke="var(--amber)" strokeWidth="2" />
-        <line x1="30" y1="38" x2="50" y2="58" stroke="var(--amber)" strokeWidth="2" />
+        <rect x="2" y="30" width="18" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="68" y="30" width="18" height="12" rx="2" fill="#2a3648" stroke="#9aafc2" strokeWidth="1.5" />
+        <rect x="20" y="12" width="48" height="48" rx="8" fill="#243146" stroke="#9aafc2" strokeWidth="2" />
+        <path d="M28 20 L60 52 M28 28 L52 52 M28 36 L44 52" stroke="#f0b429" strokeWidth="2.2" strokeLinecap="round" />
+        <circle cx="44" cy="36" r="4" fill="#5c6f88" />
       </svg>
       <div className="widget-label">{label} ΔP {dp.toFixed(1)}</div>
     </div>

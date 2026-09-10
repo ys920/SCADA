@@ -201,7 +201,9 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
     }),
   ];
 
-  // 4 rows × 5 pumps
+  const connections: Connection[] = [];
+
+  // 4 rows × 5 pumps — valve Y offset keeps port centers collinear with pump
   for (let i = 0; i < 20; i++) {
     const col = i % 5;
     const row = Math.floor(i / 5);
@@ -212,7 +214,7 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
     const pid = sid(`obj_pf_p_${i}`);
     const vid = sid(`obj_pf_v_${i}`);
     objects.push(fromInst(p, "pump", pid, x, y, 96, 80));
-    objects.push(fromInst(v, "valve", vid, x + 120, y + 8, 72, 72));
+    objects.push(fromInst(v, "valve", vid, x + 118, y + 4, 72, 72));
     objects.push(
       obj(
         sid(`obj_pf_btn_${i}`),
@@ -226,6 +228,7 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
         { label: "START" },
       ),
     );
+    connections.push(conn(`c_pf_${i}`, pid, "discharge", vid, "a"));
   }
 
   return {
@@ -234,7 +237,7 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
     width: 1280,
     height: 720,
     objects,
-    connections: [],
+    connections,
   };
 }
 
@@ -316,11 +319,11 @@ function screenProcessTrain(
         label: "PROCESS TRAIN — UDT-bound",
         fontSize: 22,
       }),
-      fromInst(t0, "tank", idTankA, 80, 180, 130, 180),
-      fromInst(f0, "filter", idFilter, 280, 250, 88, 72),
-      fromInst(p0, "pump", idPump, 430, 244, 100, 84),
-      fromInst(v0, "valve", idValve, 600, 250, 72, 72),
-      fromInst(t1, "tank", idTankB, 760, 180, 130, 180),
+      fromInst(t0, "tank", idTankA, 80, 191, 130, 180),
+      fromInst(f0, "filter", idFilter, 280, 254, 88, 72),
+      fromInst(p0, "pump", idPump, 430, 248, 100, 84),
+      fromInst(v0, "valve", idValve, 600, 254, 72, 72),
+      fromInst(t1, "tank", idTankB, 760, 191, 130, 180),
       fromInst(fl0, "flow-face", sid("obj_pt_flow"), 980, 120, 170, 120),
       fromInst(pumps[1], "pump-face", sid("obj_pt_pface"), 980, 280, 180, 140),
       fromInst(t0, "tank-face", sid("obj_pt_tface"), 980, 450, 170, 150),
