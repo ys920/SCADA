@@ -201,7 +201,7 @@ function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
     }),
   ];
 
-  const connections: Connection[] = [];
+const connections: Connection[] = [];
 
   // 4 rows × 5 pumps — valve Y offset keeps port centers collinear with pump
   for (let i = 0; i < 20; i++) {
@@ -319,7 +319,7 @@ function screenProcessTrain(
         label: "PROCESS TRAIN — UDT-bound",
         fontSize: 22,
       }),
-      fromInst(t0, "tank", idTankA, 60, 191, 130, 180),
+fromInst(t0, "tank", idTankA, 60, 191, 130, 180),
       fromInst(f0, "filter", idFilter, 280, 254, 88, 72),
       fromInst(p0, "pump", idPump, 450, 248, 100, 84),
       fromInst(v0, "valve", idValve, 640, 254, 72, 72),
@@ -392,7 +392,7 @@ function screenUtility(
       fromInst(compressors[0], "compressor", sid("obj_ut_k0"), 360, 100, 110, 90),
       fromInst(hexes[0], "heat-exchanger", sid("obj_ut_he0"), 520, 90, 150, 110),
       fromInst(hexes[1], "heat-exchanger", sid("obj_ut_he1"), 720, 90, 150, 110),
-      fromInst(conveyors[0], "conveyor", sid("obj_ut_c0"), 60, 320, 200, 56),
+fromInst(conveyors[0], "conveyor", sid("obj_ut_c0"), 60, 320, 200, 56),
       fromInst(conveyors[1], "conveyor", sid("obj_ut_c1"), 340, 320, 200, 56),
       fromInst(conveyors[2], "conveyor", sid("obj_ut_c2"), 620, 320, 200, 56),
       fromInst(motors[0], "motor", sid("obj_ut_m0"), 60, 420, 110, 80),

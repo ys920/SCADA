@@ -30,7 +30,7 @@ Open [http://localhost:3000](http://localhost:3000). Click **Reset** after upgra
 - **20 valves** (`XV_01`…`XV_20`) via ValveUDT  
 - Plus control valves, tanks, motors, blowers, compressors, filters, HEX, conveyors, PID/temp/flow loops, VFDs, reactor, vessels, HS discretes  
 - Screens: Process Train, Pump Farm (piped), Valve Gallery, Utilities & Pack, Control Loops, Live Tag Board  
-- Multi-layer metallic pipes with flanges + flow animation — click **Reset** after pull to load 
+- Multi-layer metallic pipes with flanges + flow animation — click **Reset** after pull to load
 
 ## SQL Historian
 
