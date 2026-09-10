@@ -157,9 +157,11 @@ export interface OpcUaConfig {
 
 export type AppTab =
   | "library"
+  | "udts"
   | "tags"
   | "designer"
   | "runtime"
+  | "historian"
   | "opcua";
 
 export interface ProjectState {

@@ -446,6 +446,35 @@ export function ConveyorWidget({ obj, tags }: WidgetProps) {
   );
 }
 
+export function TextWidget({ obj, tags }: WidgetProps) {
+  const bound = boundValue(obj, "text", tags, undefined);
+  const label = String(
+    bound !== undefined && bound !== null && String(bound).length > 0
+      ? bound
+      : (obj.props.label ?? obj.name),
+  );
+  const fontSize = asNumber(obj.props.fontSize, 14);
+  const color = String(obj.props.color ?? "#e8eef7");
+  return (
+    <div
+      style={{
+        ...shellStyle(),
+        fontSize,
+        color,
+        whiteSpace: "pre-wrap",
+        lineHeight: 1.35,
+        display: "flex",
+        alignItems: "center",
+        fontFamily: "var(--font-display)",
+        fontWeight: fontSize >= 20 ? 700 : 500,
+      }}
+      className="widget-text"
+    >
+      {label}
+    </div>
+  );
+}
+
 export function SparklineWidget({ obj, tags }: WidgetProps) {
   const value = asNumber(boundValue(obj, "value", tags, 0), 0);
   const min = asNumber(obj.props.min, 0);
@@ -734,6 +763,7 @@ const REGISTRY: Record<string, (props: WidgetProps) => ReactElement> = {
   numeric: NumericWidget,
   lamp: LampWidget,
   bar: BarWidget,
+  text: TextWidget,
   sparkline: SparklineWidget,
   "alarm-banner": AlarmBannerWidget,
   button: ButtonWidget,

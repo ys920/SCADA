@@ -377,7 +377,7 @@ export const useScadaStore = create<Store>()(
         })),
     }),
     {
-      name: "scada-one-project-v2",
+      name: "scada-one-project-v3",
       partialize: (s) => ({
         name: s.name,
         version: s.version,

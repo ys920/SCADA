@@ -2,18 +2,23 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { useScadaStore } from "@/lib/store";
+import { useHistorianSampler } from "@/lib/historian-client";
 import { LibraryTab } from "@/components/tabs/LibraryTab";
+import { UdtsTab } from "@/components/tabs/UdtsTab";
 import { TagsTab } from "@/components/tabs/TagsTab";
 import { DesignerTab } from "@/components/tabs/DesignerTab";
 import { RuntimeTab } from "@/components/tabs/RuntimeTab";
+import { HistorianTab } from "@/components/tabs/HistorianTab";
 import { OpcUaTab } from "@/components/tabs/OpcUaTab";
 import type { AppTab } from "@/lib/types";
 
 const TABS: { id: AppTab; label: string; hint: string }[] = [
   { id: "library", label: "Library", hint: "Templates" },
+  { id: "udts", label: "UDTs", hint: "Type defs" },
   { id: "tags", label: "Tags", hint: "Tag list" },
   { id: "designer", label: "Designer", hint: "Build screens" },
   { id: "runtime", label: "Runtime", hint: "Live HMI" },
+  { id: "historian", label: "Historian", hint: "SQL log" },
   { id: "opcua", label: "OPC UA", hint: "PLC link" },
 ];
 
@@ -36,6 +41,9 @@ export function AppShell() {
   const projectName = useScadaStore((s) => s.name);
   const opcState = useScadaStore((s) => s.opcUa.status.state);
   const resetProject = useScadaStore((s) => s.resetProject);
+  const tagCount = useScadaStore((s) => s.tags.length);
+
+  useHistorianSampler(5000);
 
   useEffect(() => {
     if (!ready || !simRunning) return;
@@ -58,7 +66,9 @@ export function AppShell() {
           <div className="brand-mark" aria-hidden />
           <div>
             <div className="brand-name">SCADA One</div>
-            <div className="brand-sub">{projectName}</div>
+            <div className="brand-sub">
+              {projectName} · {tagCount} tags
+            </div>
           </div>
         </div>
 
@@ -93,7 +103,7 @@ export function AppShell() {
             type="button"
             className="ghost-btn"
             onClick={() => {
-              if (confirm("Reset project to demo seed?")) resetProject();
+              if (confirm("Reset project to UDT plant seed?")) resetProject();
             }}
           >
             Reset
@@ -103,9 +113,11 @@ export function AppShell() {
 
       <main className="app-main">
         {activeTab === "library" && <LibraryTab />}
+        {activeTab === "udts" && <UdtsTab />}
         {activeTab === "tags" && <TagsTab />}
         {activeTab === "designer" && <DesignerTab />}
         {activeTab === "runtime" && <RuntimeTab />}
+        {activeTab === "historian" && <HistorianTab />}
         {activeTab === "opcua" && <OpcUaTab />}
       </main>
     </div>
