@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { getLibraryItem, LIBRARY_CATALOG } from "@/lib/library-catalog";
 import { portPosition } from "@/lib/bindings";
 import { useScadaStore, useTagMap } from "@/lib/store";
@@ -44,24 +44,25 @@ export function DesignerTab() {
     ? getLibraryItem(selected.libraryItemId)
     : undefined;
 
-  const connectionPaths = useMemo(() => {
-    if (!screen) return [];
-    return screen.connections.map((c) => {
-      const fromObj = screen.objects.find((o) => o.id === c.from.objectId);
-      const toObj = screen.objects.find((o) => o.id === c.to.objectId);
-      if (!fromObj || !toObj) return null;
-      const fromLib = getLibraryItem(fromObj.libraryItemId);
-      const toLib = getLibraryItem(toObj.libraryItemId);
-      const fromPort = fromLib?.ports.find((p) => p.id === c.from.portId);
-      const toPort = toLib?.ports.find((p) => p.id === c.to.portId);
-      if (!fromPort || !toPort) return null;
-      const a = portPosition(fromObj, fromPort.side, fromPort.offset);
-      const b = portPosition(toObj, toPort.side, toPort.offset);
-      const midX = (a.x + b.x) / 2;
-      const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
-      return { id: c.id, d };
-    }).filter(Boolean) as { id: string; d: string }[];
-  }, [screen]);
+  const connectionPaths = !screen
+    ? []
+    : (screen.connections
+        .map((c) => {
+          const fromObj = screen.objects.find((o) => o.id === c.from.objectId);
+          const toObj = screen.objects.find((o) => o.id === c.to.objectId);
+          if (!fromObj || !toObj) return null;
+          const fromLib = getLibraryItem(fromObj.libraryItemId);
+          const toLib = getLibraryItem(toObj.libraryItemId);
+          const fromPort = fromLib?.ports.find((p) => p.id === c.from.portId);
+          const toPort = toLib?.ports.find((p) => p.id === c.to.portId);
+          if (!fromPort || !toPort) return null;
+          const a = portPosition(fromObj, fromPort.side, fromPort.offset);
+          const b = portPosition(toObj, toPort.side, toPort.offset);
+          const midX = (a.x + b.x) / 2;
+          const d = `M ${a.x} ${a.y} C ${midX} ${a.y}, ${midX} ${b.y}, ${b.x} ${b.y}`;
+          return { id: c.id, d };
+        })
+        .filter(Boolean) as { id: string; d: string }[]);
 
   const onCanvasPointerDown = (e: React.PointerEvent) => {
     if (!screen || !canvasRef.current) return;

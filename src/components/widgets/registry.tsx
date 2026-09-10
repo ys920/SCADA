@@ -11,7 +11,7 @@ interface WidgetProps {
   onWrite?: (tagId: string, value: boolean | number | string) => void;
 }
 
-function shellStyle(obj: ScreenObject): CSSProperties {
+function shellStyle(): CSSProperties {
   return {
     width: "100%",
     height: "100%",
@@ -25,7 +25,7 @@ export function TankWidget({ obj, tags }: WidgetProps) {
   const pct = Math.min(100, Math.max(0, level));
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className="widget-tank">
+    <div style={shellStyle()} className="widget-tank">
       <div className="tank-body">
         <div className="tank-fill" style={{ height: `${pct}%` }} />
         <span className="tank-pct">{pct.toFixed(0)}%</span>
@@ -40,7 +40,7 @@ export function ValveWidget({ obj, tags }: WidgetProps) {
   const pos = asNumber(boundValue(obj, "position", tags, open ? 100 : 0), 0);
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className={`widget-valve ${open || pos > 5 ? "is-open" : ""}`}>
+    <div style={shellStyle()} className={`widget-valve ${open || pos > 5 ? "is-open" : ""}`}>
       <svg viewBox="0 0 72 72" className="widget-svg">
         <line x1="4" y1="36" x2="24" y2="36" stroke="currentColor" strokeWidth="4" />
         <line x1="48" y1="36" x2="68" y2="36" stroke="currentColor" strokeWidth="4" />
@@ -66,7 +66,7 @@ export function PumpWidget({ obj, tags }: WidgetProps) {
   const running = asBool(boundValue(obj, "running", tags, false));
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className={`widget-pump ${running ? "is-running" : ""}`}>
+    <div style={shellStyle()} className={`widget-pump ${running ? "is-running" : ""}`}>
       <svg viewBox="0 0 96 80" className="widget-svg">
         <circle
           cx="48"
@@ -100,7 +100,7 @@ export function MotorWidget({ obj, tags }: WidgetProps) {
   const speed = asNumber(boundValue(obj, "speed", tags, 0), 0);
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className={`widget-motor ${running ? "is-running" : ""}`}>
+    <div style={shellStyle()} className={`widget-motor ${running ? "is-running" : ""}`}>
       <div className="motor-block">
         <span className="motor-dot" />
         <div>
@@ -121,7 +121,7 @@ export function GaugeWidget({ obj, tags }: WidgetProps) {
   const frac = max === min ? 0 : (value - min) / (max - min);
   const angle = -120 + Math.min(1, Math.max(0, frac)) * 240;
   return (
-    <div style={shellStyle(obj)} className="widget-gauge">
+    <div style={shellStyle()} className="widget-gauge">
       <svg viewBox="0 0 110 110" className="widget-svg">
         <path
           d="M20 78 A40 40 0 1 1 90 78"
@@ -155,7 +155,7 @@ export function NumericWidget({ obj, tags }: WidgetProps) {
   const unit = String(obj.props.unit ?? "");
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className="widget-numeric">
+    <div style={shellStyle()} className="widget-numeric">
       <div className="widget-label tight">{label}</div>
       <div className="mono-readout lg">{formatValue(value, decimals, unit)}</div>
     </div>
@@ -168,7 +168,7 @@ export function LampWidget({ obj, tags }: WidgetProps) {
   const colorOn = String(obj.props.colorOn ?? "#3ddc97");
   const colorOff = String(obj.props.colorOff ?? "#2a3340");
   return (
-    <div style={shellStyle(obj)} className="widget-lamp">
+    <div style={shellStyle()} className="widget-lamp">
       <div
         className={`lamp-orb ${on ? "on" : ""}`}
         style={{ background: on ? colorOn : colorOff }}
@@ -185,7 +185,7 @@ export function BarWidget({ obj, tags }: WidgetProps) {
   const pct = max === min ? 0 : ((value - min) / (max - min)) * 100;
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className="widget-bar">
+    <div style={shellStyle()} className="widget-bar">
       <div className="bar-track">
         <div className="bar-fill" style={{ height: `${Math.min(100, Math.max(0, pct))}%` }} />
       </div>
@@ -202,7 +202,7 @@ export function ButtonWidget({ obj, tags, interactive, onWrite }: WidgetProps) {
     <button
       type="button"
       className={`widget-button ${pressed ? "is-pressed" : ""}`}
-      style={shellStyle(obj)}
+      style={shellStyle()}
       disabled={!interactive || !binding}
       onMouseDown={() => binding && onWrite?.(binding.tagId, true)}
       onMouseUp={() => binding && onWrite?.(binding.tagId, false)}
@@ -221,7 +221,7 @@ export function ToggleWidget({ obj, tags, interactive, onWrite }: WidgetProps) {
     <button
       type="button"
       className={`widget-toggle ${state ? "is-on" : ""}`}
-      style={shellStyle(obj)}
+      style={shellStyle()}
       disabled={!interactive || !binding}
       onClick={() => binding && onWrite?.(binding.tagId, !state)}
     >
@@ -238,7 +238,7 @@ export function PidFaceWidget({ obj, tags }: WidgetProps) {
   const unit = String(obj.props.unit ?? "%");
   const label = String(obj.props.label ?? obj.name);
   return (
-    <div style={shellStyle(obj)} className="widget-pid">
+    <div style={shellStyle()} className="widget-pid">
       <div className="pid-title">{label}</div>
       <div className="pid-row">
         <span>PV</span>
@@ -274,7 +274,7 @@ export function RenderWidget(props: WidgetProps) {
   const Comp = REGISTRY[props.obj.libraryItemId];
   if (!Comp) {
     return (
-      <div className="widget-unknown" style={shellStyle(props.obj)}>
+      <div className="widget-unknown" style={shellStyle()}>
         Unknown: {props.obj.libraryItemId}
       </div>
     );

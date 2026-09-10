@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useScadaStore } from "@/lib/store";
 import { LibraryTab } from "@/components/tabs/LibraryTab";
 import { TagsTab } from "@/components/tabs/TagsTab";
@@ -17,8 +17,16 @@ const TABS: { id: AppTab; label: string; hint: string }[] = [
   { id: "opcua", label: "OPC UA", hint: "PLC link" },
 ];
 
+function useHasHydrated() {
+  return useSyncExternalStore(
+    (onStoreChange) => useScadaStore.persist.onFinishHydration(onStoreChange),
+    () => useScadaStore.persist.hasHydrated(),
+    () => false,
+  );
+}
+
 export function AppShell() {
-  const [ready, setReady] = useState(false);
+  const ready = useHasHydrated();
   const activeTab = useScadaStore((s) => s.activeTab);
   const setActiveTab = useScadaStore((s) => s.setActiveTab);
   const simRunning = useScadaStore((s) => s.simRunning);
@@ -28,10 +36,6 @@ export function AppShell() {
   const projectName = useScadaStore((s) => s.name);
   const opcState = useScadaStore((s) => s.opcUa.status.state);
   const resetProject = useScadaStore((s) => s.resetProject);
-
-  useEffect(() => {
-    setReady(true);
-  }, []);
 
   useEffect(() => {
     if (!ready || !simRunning) return;
