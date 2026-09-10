@@ -6,8 +6,13 @@ import type {
   ScreenObject,
   Tag,
 } from "./types";
+import {
+  bindingsFromUdt,
+  instantiateSeries,
+  instantiateUdt,
+  type UdtInstance,
+} from "./udt";
 
-/** Stable ids so seed screens stay consistent across resets. */
 function sid(name: string) {
   return name;
 }
@@ -69,586 +74,521 @@ function conn(
   };
 }
 
-export function createSeedTags(): Tag[] {
-  const now = Date.now();
-  const mk = (
-    partial: Omit<Tag, "quality" | "timestamp" | "source"> &
-      Partial<Pick<Tag, "quality" | "source">>,
-  ): Tag => ({
-    quality: "good",
-    timestamp: now,
-    source: "simulation",
-    ...partial,
-  });
+function fromInst(
+  inst: UdtInstance,
+  libraryItemId: string,
+  id: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  extraProps: Record<string, unknown> = {},
+): ScreenObject {
+  return obj(
+    id,
+    libraryItemId,
+    inst.instanceName,
+    x,
+    y,
+    w,
+    h,
+    bindingsFromUdt(inst),
+    extraProps,
+  );
+}
 
-  return [
-    mk({
-      id: "tag_tank_a",
-      name: "TankA_Level",
-      path: "Plant.Intake.TankA.Level",
-      dataType: "float",
-      unit: "%",
-      value: 62,
-      sim: { profile: "sine", periodMs: 14000, min: 25, max: 88, amplitude: 28, offset: 55, phase: 0 },
-      hiLimit: 85,
-      loLimit: 20,
+/** Build the full simulated plant from UDT instances */
+export function buildPlant() {
+  const pumps = instantiateSeries("PumpUDT", "P", 20, "Plant.Pumps", 1);
+  const valves = instantiateSeries("ValveUDT", "XV", 20, "Plant.Valves", 1);
+  const controlValves = instantiateSeries(
+    "ControlValveUDT",
+    "FV",
+    8,
+    "Plant.Valves",
+    1,
+  );
+  const tanks = instantiateSeries("TankUDT", "TK", 8, "Plant.Tanks", 1);
+  const motors = instantiateSeries("MotorUDT", "M", 6, "Plant.Motors", 1);
+  const blowers = instantiateSeries("BlowerUDT", "B", 4, "Plant.Air", 1);
+  const compressors = instantiateSeries(
+    "CompressorUDT",
+    "K",
+    2,
+    "Plant.Air",
+    1,
+  );
+  const filters = instantiateSeries("FilterUDT", "F", 4, "Plant.Filters", 1);
+  const hexes = instantiateSeries("HeatExchangerUDT", "HE", 3, "Plant.HEX", 1);
+  const conveyors = instantiateSeries(
+    "ConveyorUDT",
+    "CVY",
+    4,
+    "Plant.Pack",
+    1,
+  );
+  const pids = instantiateSeries("PidUDT", "PIC", 4, "Plant.Loops", 1);
+  const temps = instantiateSeries("TempLoopUDT", "TIC", 3, "Plant.Loops", 1);
+  const flows = instantiateSeries("FlowUDT", "FIC", 4, "Plant.Loops", 1);
+  const vfds = instantiateSeries("VfdUDT", "VFD", 4, "Plant.Drives", 1);
+  const reactors = [
+    instantiateUdt("ReactorUDT", "R_01", "Plant.React", 0.2),
+  ];
+  const vessels = instantiateSeries("VesselUDT", "V", 3, "Plant.Vessels", 1);
+  const discretes = [
+    instantiateUdt("DiscreteUDT", "HS_Ready", "Plant.HS", 0),
+    instantiateUdt("DiscreteUDT", "HS_Auto", "Plant.HS", 0.5),
+    instantiateUdt("DiscreteUDT", "HS_Alarm", "Plant.HS", 1),
+  ];
+
+  const allInstances: UdtInstance[] = [
+    ...pumps,
+    ...valves,
+    ...controlValves,
+    ...tanks,
+    ...motors,
+    ...blowers,
+    ...compressors,
+    ...filters,
+    ...hexes,
+    ...conveyors,
+    ...pids,
+    ...temps,
+    ...flows,
+    ...vfds,
+    ...reactors,
+    ...vessels,
+    ...discretes,
+  ];
+
+  const tags: Tag[] = allInstances.flatMap((i) => i.tags);
+
+  return {
+    tags,
+    instances: {
+      pumps,
+      valves,
+      controlValves,
+      tanks,
+      motors,
+      blowers,
+      compressors,
+      filters,
+      hexes,
+      conveyors,
+      pids,
+      temps,
+      flows,
+      vfds,
+      reactors,
+      vessels,
+      discretes,
+    },
+  };
+}
+
+function screenPumpFarm(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
+  const objects: ScreenObject[] = [
+    obj(sid("txt_pump_title"), "text", "PUMP FARM — 20 Pumps", 40, 20, 420, 36, [], {
+      label: "PUMP FARM — 20 Pumps",
+      fontSize: 22,
+      color: "#e8eef7",
     }),
-    mk({
-      id: "tag_tank_b",
-      name: "TankB_Level",
-      path: "Plant.Intake.TankB.Level",
-      dataType: "float",
-      unit: "%",
-      value: 48,
-      sim: { profile: "sine", periodMs: 16000, min: 18, max: 80, amplitude: 25, offset: 48, phase: 1.2 },
-    }),
-    mk({
-      id: "tag_tank_c",
-      name: "TankC_Level",
-      path: "Plant.Mix.TankC.Level",
-      dataType: "float",
-      unit: "%",
-      value: 55,
-      sim: { profile: "ramp", periodMs: 20000, min: 10, max: 90, amplitude: 40, offset: 50, phase: 0 },
-    }),
-    mk({
-      id: "tag_pump_run",
-      name: "Pump_Running",
-      path: "Plant.Intake.P01.Running",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "toggle", periodMs: 9000, min: 0, max: 1, amplitude: 1, offset: 0, phase: 0 },
-    }),
-    mk({
-      id: "tag_pump2_run",
-      name: "Pump2_Running",
-      path: "Plant.Boiler.P02.Running",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "constant", periodMs: 1000, min: 0, max: 1, amplitude: 0, offset: 1, phase: 0 },
-    }),
-    mk({
-      id: "tag_valve_open",
-      name: "Valve_Open",
-      path: "Plant.Intake.XV01.Open",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "pulse", periodMs: 8000, min: 0, max: 1, amplitude: 1, offset: 0, phase: 0.1 },
-    }),
-    mk({
-      id: "tag_valve_pos",
-      name: "Valve_Position",
-      path: "Plant.Boiler.FV01.Pos",
-      dataType: "float",
-      unit: "%",
-      value: 42,
-      sim: { profile: "sine", periodMs: 11000, min: 15, max: 85, amplitude: 30, offset: 50, phase: 0.4 },
-    }),
-    mk({
-      id: "tag_pressure",
-      name: "Line_Pressure",
-      path: "Plant.Intake.PI01.PV",
-      dataType: "float",
-      unit: "bar",
-      value: 4.2,
-      sim: { profile: "noise", periodMs: 6000, min: 2, max: 8, amplitude: 1.5, offset: 4.5, phase: 1 },
-    }),
-    mk({
-      id: "tag_flow",
-      name: "Flow_Rate",
-      path: "Plant.Intake.FI01.PV",
-      dataType: "float",
-      unit: "m³/h",
-      value: 28,
-      sim: { profile: "ramp", periodMs: 15000, min: 8, max: 42, amplitude: 17, offset: 25, phase: 0 },
-    }),
-    mk({
-      id: "tag_flow_total",
-      name: "Flow_Total",
-      path: "Plant.Intake.FI01.Total",
-      dataType: "float",
-      unit: "m³",
-      value: 12480,
-      sim: { profile: "ramp", periodMs: 60000, min: 12000, max: 13000, amplitude: 500, offset: 12500, phase: 0 },
-    }),
-    mk({
-      id: "tag_motor_speed",
-      name: "Motor_Speed",
-      path: "Plant.Line.M01.Speed",
-      dataType: "float",
-      unit: "rpm",
-      value: 1450,
-      sim: { profile: "sine", periodMs: 9000, min: 900, max: 1750, amplitude: 350, offset: 1300, phase: 0.5 },
-    }),
-    mk({
-      id: "tag_motor_amps",
-      name: "Motor_Amps",
-      path: "Plant.Line.M01.Amps",
-      dataType: "float",
-      unit: "A",
-      value: 18,
-      sim: { profile: "noise", periodMs: 5000, min: 10, max: 28, amplitude: 6, offset: 18, phase: 0.2 },
-    }),
-    mk({
-      id: "tag_blower_run",
-      name: "Blower_Running",
-      path: "Plant.Air.B01.Running",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "toggle", periodMs: 12000, min: 0, max: 1, amplitude: 1, offset: 0, phase: 0 },
-    }),
-    mk({
-      id: "tag_comp_run",
-      name: "Comp_Running",
-      path: "Plant.Air.K01.Running",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "constant", periodMs: 1000, min: 0, max: 1, amplitude: 0, offset: 1, phase: 0 },
-    }),
-    mk({
-      id: "tag_comp_load",
-      name: "Comp_Load",
-      path: "Plant.Air.K01.Load",
-      dataType: "float",
-      unit: "%",
-      value: 62,
-      sim: { profile: "sine", periodMs: 10000, min: 35, max: 90, amplitude: 25, offset: 62, phase: 0.7 },
-    }),
-    mk({
-      id: "tag_hex_duty",
-      name: "HEX_Duty",
-      path: "Plant.Boiler.HE01.Duty",
-      dataType: "float",
-      unit: "%",
-      value: 55,
-      sim: { profile: "sine", periodMs: 13000, min: 30, max: 85, amplitude: 22, offset: 55, phase: 0.3 },
-    }),
-    mk({
-      id: "tag_filter_dp",
-      name: "Filter_DP",
-      path: "Plant.Intake.F01.DP",
-      dataType: "float",
-      unit: "bar",
-      value: 0.4,
-      sim: { profile: "noise", periodMs: 8000, min: 0.1, max: 1.2, amplitude: 0.3, offset: 0.5, phase: 0 },
-    }),
-    mk({
-      id: "tag_reactor_lvl",
-      name: "Reactor_Level",
-      path: "Plant.Mix.R01.Level",
-      dataType: "float",
-      unit: "%",
-      value: 60,
-      sim: { profile: "sine", periodMs: 18000, min: 35, max: 78, amplitude: 18, offset: 55, phase: 0.8 },
-    }),
-    mk({
-      id: "tag_reactor_temp",
-      name: "Reactor_Temp",
-      path: "Plant.Mix.R01.Temp",
-      dataType: "float",
-      unit: "°C",
-      value: 72,
-      sim: { profile: "sine", periodMs: 14000, min: 55, max: 95, amplitude: 15, offset: 75, phase: 0.2 },
-    }),
-    mk({
-      id: "tag_agitator",
-      name: "Agitator_Run",
-      path: "Plant.Mix.R01.Agitator",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "toggle", periodMs: 10000, min: 0, max: 1, amplitude: 1, offset: 0, phase: 0 },
-    }),
-    mk({
-      id: "tag_conveyor",
-      name: "Conveyor_Run",
-      path: "Plant.Pack.CVY01.Running",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "toggle", periodMs: 7000, min: 0, max: 1, amplitude: 1, offset: 0, phase: 0 },
-    }),
-    mk({
-      id: "tag_pid_pv",
-      name: "PIC101_PV",
-      path: "Plant.Boiler.PIC101.PV",
-      dataType: "float",
-      unit: "%",
-      value: 48,
-      sim: { profile: "sine", periodMs: 10000, min: 30, max: 70, amplitude: 15, offset: 50, phase: 0 },
-    }),
-    mk({
-      id: "tag_pid_sp",
-      name: "PIC101_SP",
-      path: "Plant.Boiler.PIC101.SP",
-      dataType: "float",
-      unit: "%",
-      value: 50,
-      sim: { profile: "constant", periodMs: 1000, min: 0, max: 100, amplitude: 0, offset: 50, phase: 0 },
-    }),
-    mk({
-      id: "tag_pid_out",
-      name: "PIC101_OUT",
-      path: "Plant.Boiler.PIC101.OUT",
-      dataType: "float",
-      unit: "%",
-      value: 42,
-      sim: { profile: "sine", periodMs: 10000, min: 20, max: 80, amplitude: 20, offset: 45, phase: 1.2 },
-    }),
-    mk({
-      id: "tag_temp_pv",
-      name: "TIC101_PV",
-      path: "Plant.Boiler.TIC101.PV",
-      dataType: "float",
-      unit: "°C",
-      value: 118,
-      sim: { profile: "sine", periodMs: 12000, min: 95, max: 140, amplitude: 18, offset: 118, phase: 0.5 },
-    }),
-    mk({
-      id: "tag_temp_sp",
-      name: "TIC101_SP",
-      path: "Plant.Boiler.TIC101.SP",
-      dataType: "float",
-      unit: "°C",
-      value: 120,
-      sim: { profile: "constant", periodMs: 1000, min: 0, max: 200, amplitude: 0, offset: 120, phase: 0 },
-    }),
-    mk({
-      id: "tag_temp_out",
-      name: "TIC101_OUT",
-      path: "Plant.Boiler.TIC101.OUT",
-      dataType: "float",
-      unit: "%",
-      value: 55,
-      sim: { profile: "sine", periodMs: 12000, min: 30, max: 80, amplitude: 20, offset: 55, phase: 1 },
-    }),
-    mk({
-      id: "tag_vfd_hz",
-      name: "VFD_Hz",
-      path: "Plant.Line.VFD01.Hz",
-      dataType: "float",
-      unit: "Hz",
-      value: 42,
-      sim: { profile: "sine", periodMs: 9000, min: 25, max: 55, amplitude: 12, offset: 40, phase: 0.3 },
-    }),
-    mk({
-      id: "tag_vfd_torque",
-      name: "VFD_Torque",
-      path: "Plant.Line.VFD01.Torque",
-      dataType: "float",
-      unit: "%",
-      value: 60,
-      sim: { profile: "noise", periodMs: 6000, min: 35, max: 85, amplitude: 15, offset: 60, phase: 0 },
-    }),
-    mk({
-      id: "tag_hs_ready",
-      name: "System_Ready",
-      path: "Plant.HS.Ready",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "constant", periodMs: 1000, min: 0, max: 1, amplitude: 0, offset: 1, phase: 0 },
-    }),
-    mk({
-      id: "tag_alarm_hi",
-      name: "TankA_HiAlarm",
-      path: "Plant.Intake.TankA.Hi",
-      dataType: "bool",
-      value: false,
-      sim: { profile: "pulse", periodMs: 20000, min: 0, max: 1, amplitude: 1, offset: 0, phase: 0.8 },
-    }),
-    mk({
-      id: "tag_mode_auto",
-      name: "Mode_Auto",
-      path: "Plant.HS.Auto",
-      dataType: "bool",
-      value: true,
-      sim: { profile: "constant", periodMs: 1000, min: 0, max: 1, amplitude: 0, offset: 1, phase: 0 },
-    }),
-    mk({
-      id: "tag_vessel_lvl",
-      name: "Vessel_Level",
-      path: "Plant.Boiler.V01.Level",
-      dataType: "float",
-      unit: "%",
-      value: 52,
-      sim: { profile: "sine", periodMs: 15000, min: 30, max: 75, amplitude: 18, offset: 52, phase: 0.6 },
+    obj(sid("txt_pump_sub"), "text", "Each pump uses PumpUDT tags", 40, 56, 360, 24, [], {
+      label: "Each pump uses PumpUDT (Running, Flow, Pressure, Fault…)",
+      fontSize: 12,
+      color: "#93a0b5",
     }),
   ];
-}
 
-/** 1 — clean left-to-right intake train */
-function screenIntake(): Screen {
-  const tankA = sid("obj_intake_tanka");
-  const filter = sid("obj_intake_filter");
-  const pump = sid("obj_intake_pump");
-  const check = sid("obj_intake_check");
-  const valve = sid("obj_intake_valve");
-  const tankB = sid("obj_intake_tankb");
+  // 4 rows × 5 pumps
+  for (let i = 0; i < 20; i++) {
+    const col = i % 5;
+    const row = Math.floor(i / 5);
+    const x = 40 + col * 240;
+    const y = 100 + row * 140;
+    const p = pumps[i];
+    const v = valves[i];
+    const pid = sid(`obj_pf_p_${i}`);
+    const vid = sid(`obj_pf_v_${i}`);
+    objects.push(fromInst(p, "pump", pid, x, y, 96, 80));
+    objects.push(fromInst(v, "valve", vid, x + 120, y + 8, 72, 72));
+    objects.push(
+      obj(
+        sid(`obj_pf_btn_${i}`),
+        "button",
+        `START ${p.instanceName}`,
+        x,
+        y + 90,
+        100,
+        36,
+        [{ prop: "pressed", tagId: p.tagIds.StartCmd }],
+        { label: "START" },
+      ),
+    );
+  }
 
   return {
-    id: sid("scr_intake"),
-    name: "01 — Raw Water Intake",
+    id: sid("scr_pump_farm"),
+    name: "10 — Pump Farm (20×)",
+    width: 1280,
+    height: 720,
+    objects,
+    connections: [],
+  };
+}
+
+function screenValveGallery(valves: UdtInstance[], fvs: UdtInstance[]): Screen {
+  const objects: ScreenObject[] = [
+    obj(sid("txt_v_title"), "text", "VALVE GALLERY — 20 XV + 8 FV", 40, 20, 480, 36, [], {
+      label: "VALVE GALLERY — 20× XV + 8× FV",
+      fontSize: 22,
+    }),
+  ];
+
+  for (let i = 0; i < 20; i++) {
+    const col = i % 10;
+    const row = Math.floor(i / 10);
+    const x = 40 + col * 120;
+    const y = 90 + row * 130;
+    objects.push(fromInst(valves[i], "valve", sid(`obj_vg_xv_${i}`), x, y, 72, 72));
+    objects.push(
+      obj(
+        sid(`obj_vg_lbl_${i}`),
+        "text",
+        valves[i].instanceName,
+        x - 4,
+        y + 78,
+        80,
+        20,
+        [],
+        { label: valves[i].instanceName, fontSize: 11, color: "#93a0b5" },
+      ),
+    );
+  }
+
+  for (let i = 0; i < 8; i++) {
+    const x = 40 + i * 150;
+    const y = 400;
+    objects.push(
+      fromInst(fvs[i], "control-valve", sid(`obj_vg_fv_${i}`), x, y, 80, 96),
+    );
+  }
+
+  return {
+    id: sid("scr_valve_gallery"),
+    name: "11 — Valve Gallery",
+    width: 1280,
+    height: 720,
+    objects,
+    connections: [],
+  };
+}
+
+function screenProcessTrain(
+  tanks: UdtInstance[],
+  pumps: UdtInstance[],
+  valves: UdtInstance[],
+  filters: UdtInstance[],
+  flows: UdtInstance[],
+  ready: UdtInstance,
+): Screen {
+  const t0 = tanks[0];
+  const t1 = tanks[1];
+  const p0 = pumps[0];
+  const v0 = valves[0];
+  const f0 = filters[0];
+  const fl0 = flows[0];
+
+  const idTankA = sid("obj_pt_tanka");
+  const idFilter = sid("obj_pt_filter");
+  const idPump = sid("obj_pt_pump");
+  const idValve = sid("obj_pt_valve");
+  const idTankB = sid("obj_pt_tankb");
+
+  return {
+    id: sid("scr_process_train"),
+    name: "12 — Process Train",
     width: 1280,
     height: 720,
     objects: [
-      obj(tankA, "tank", "TK-A", 80, 200, 130, 180, [{ prop: "level", tagId: "tag_tank_a" }]),
-      obj(filter, "filter", "F-01", 280, 263, 88, 72, [{ prop: "dp", tagId: "tag_filter_dp" }]),
-      obj(pump, "pump", "P-01", 430, 257, 100, 84, [{ prop: "running", tagId: "tag_pump_run" }]),
-      obj(check, "check-valve", "CV-01", 580, 271, 64, 56),
-      obj(valve, "valve", "XV-01", 700, 263, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
-      obj(tankB, "tank", "TK-B", 860, 200, 130, 180, [{ prop: "level", tagId: "tag_tank_b" }]),
-      obj(sid("obj_intake_pi"), "gauge", "PI-01", 430, 80, 110, 110, [{ prop: "value", tagId: "tag_pressure" }], { min: 0, max: 10, unit: "bar" }),
-      obj(sid("obj_intake_fi"), "numeric", "Flow", 580, 100, 150, 56, [{ prop: "value", tagId: "tag_flow" }], { decimals: 1, unit: "m³/h" }),
-      obj(sid("obj_intake_ready"), "lamp", "READY", 780, 100, 64, 64, [{ prop: "on", tagId: "tag_hs_ready" }]),
-      obj(sid("obj_intake_pumpface"), "pump-face", "PMP-01", 1040, 180, 180, 140, [
-        { prop: "running", tagId: "tag_pump_run" },
-        { prop: "flow", tagId: "tag_flow" },
-        { prop: "pressure", tagId: "tag_pressure" },
-      ]),
-      obj(sid("obj_intake_tankface"), "tank-face", "TK-A", 1040, 360, 170, 150, [
-        { prop: "level", tagId: "tag_tank_a" },
-        { prop: "hi", tagId: "tag_alarm_hi" },
-      ]),
+      obj(sid("txt_pt"), "text", "PROCESS TRAIN", 40, 24, 280, 32, [], {
+        label: "PROCESS TRAIN — UDT-bound",
+        fontSize: 22,
+      }),
+      fromInst(t0, "tank", idTankA, 80, 180, 130, 180),
+      fromInst(f0, "filter", idFilter, 280, 250, 88, 72),
+      fromInst(p0, "pump", idPump, 430, 244, 100, 84),
+      fromInst(v0, "valve", idValve, 600, 250, 72, 72),
+      fromInst(t1, "tank", idTankB, 760, 180, 130, 180),
+      fromInst(fl0, "flow-face", sid("obj_pt_flow"), 980, 120, 170, 120),
+      fromInst(pumps[1], "pump-face", sid("obj_pt_pface"), 980, 280, 180, 140),
+      fromInst(t0, "tank-face", sid("obj_pt_tface"), 980, 450, 170, 150),
+      obj(
+        sid("obj_pt_lamp"),
+        "lamp",
+        "READY",
+        80,
+        80,
+        64,
+        64,
+        [{ prop: "on", tagId: ready.tagIds.State }],
+      ),
+      obj(
+        sid("obj_pt_start"),
+        "button",
+        "START",
+        180,
+        90,
+        96,
+        44,
+        [{ prop: "pressed", tagId: p0.tagIds.StartCmd }],
+        { label: "START P_01" },
+      ),
+      obj(
+        sid("obj_pt_stop"),
+        "button",
+        "STOP",
+        290,
+        90,
+        96,
+        44,
+        [{ prop: "pressed", tagId: p0.tagIds.StopCmd }],
+        { label: "STOP P_01" },
+      ),
     ],
     connections: [
-      conn("c_intake_1", tankA, "side-out", filter, "in"),
-      conn("c_intake_2", filter, "out", pump, "suction"),
-      conn("c_intake_3", pump, "discharge", check, "a"),
-      conn("c_intake_4", check, "b", valve, "a"),
-      conn("c_intake_5", valve, "b", tankB, "side-in"),
+      conn("c_pt_1", idTankA, "side-out", idFilter, "in"),
+      conn("c_pt_2", idFilter, "out", idPump, "suction"),
+      conn("c_pt_3", idPump, "discharge", idValve, "a"),
+      conn("c_pt_4", idValve, "b", idTankB, "side-in"),
     ],
   };
 }
 
-/** 2 — mixing skid with reactor */
-function screenMixing(): Screen {
-  const ta = sid("obj_mix_ta");
-  const tb = sid("obj_mix_tb");
-  const va = sid("obj_mix_va");
-  const vb = sid("obj_mix_vb");
-  const reactor = sid("obj_mix_r");
-  const outv = sid("obj_mix_outv");
-  const tc = sid("obj_mix_tc");
-
+function screenUtility(
+  blowers: UdtInstance[],
+  compressors: UdtInstance[],
+  hexes: UdtInstance[],
+  conveyors: UdtInstance[],
+  motors: UdtInstance[],
+  vfds: UdtInstance[],
+): Screen {
   return {
-    id: sid("scr_mixing"),
-    name: "02 — Mixing Skid",
+    id: sid("scr_utility"),
+    name: "13 — Utilities & Pack",
     width: 1280,
     height: 720,
     objects: [
-      obj(ta, "tank", "RAW-A", 80, 80, 110, 150, [{ prop: "level", tagId: "tag_tank_a" }]),
-      obj(tb, "tank", "RAW-B", 80, 400, 110, 150, [{ prop: "level", tagId: "tag_tank_b" }]),
-      obj(va, "control-valve", "FV-A", 280, 100, 80, 96, [{ prop: "position", tagId: "tag_valve_pos" }]),
-      obj(vb, "control-valve", "FV-B", 280, 420, 80, 96, [{ prop: "position", tagId: "tag_pid_out" }]),
-      obj(reactor, "reactor", "R-101", 520, 220, 140, 170, [
-        { prop: "level", tagId: "tag_reactor_lvl" },
-        { prop: "temp", tagId: "tag_reactor_temp" },
-        { prop: "agitating", tagId: "tag_agitator" },
-      ]),
-      obj(outv, "valve", "XV-OUT", 760, 269, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
-      obj(tc, "tank", "PROD", 920, 212, 120, 170, [{ prop: "level", tagId: "tag_tank_c" }]),
-      obj(sid("obj_mix_tempface"), "temp-face", "TIC-101", 1080, 120, 170, 130, [
-        { prop: "pv", tagId: "tag_reactor_temp" },
-        { prop: "sp", tagId: "tag_temp_sp" },
-        { prop: "out", tagId: "tag_temp_out" },
-      ], { unit: "°C" }),
-      obj(sid("obj_mix_selector"), "selector", "MODE", 1080, 290, 120, 52, [{ prop: "auto", tagId: "tag_mode_auto" }]),
-      obj(sid("obj_mix_alarm"), "alarm-banner", "ALARM", 1080, 380, 170, 48, [{ prop: "active", tagId: "tag_alarm_hi" }], { message: "Reactor Hi Temp" }),
+      obj(sid("txt_ut"), "text", "UTILITIES & PACKAGING", 40, 24, 400, 32, [], {
+        label: "UTILITIES & PACKAGING",
+        fontSize: 22,
+      }),
+      fromInst(blowers[0], "blower", sid("obj_ut_b0"), 60, 100, 100, 88),
+      fromInst(blowers[1], "blower", sid("obj_ut_b1"), 200, 100, 100, 88),
+      fromInst(compressors[0], "compressor", sid("obj_ut_k0"), 360, 100, 110, 90),
+      fromInst(hexes[0], "heat-exchanger", sid("obj_ut_he0"), 520, 90, 150, 110),
+      fromInst(hexes[1], "heat-exchanger", sid("obj_ut_he1"), 720, 90, 150, 110),
+      fromInst(conveyors[0], "conveyor", sid("obj_ut_c0"), 60, 320, 220, 56),
+      fromInst(conveyors[1], "conveyor", sid("obj_ut_c1"), 320, 320, 220, 56),
+      fromInst(conveyors[2], "conveyor", sid("obj_ut_c2"), 580, 320, 220, 56),
+      fromInst(motors[0], "motor", sid("obj_ut_m0"), 60, 420, 110, 80),
+      fromInst(motors[1], "motor", sid("obj_ut_m1"), 200, 420, 110, 80),
+      fromInst(vfds[0], "vfd-face", sid("obj_ut_vfd0"), 980, 80, 180, 150),
+      fromInst(motors[0], "motor-face", sid("obj_ut_mface"), 980, 260, 180, 140),
+      obj(
+        sid("obj_ut_lamp"),
+        "lamp",
+        "AIR",
+        860,
+        120,
+        64,
+        64,
+        [{ prop: "on", tagId: blowers[0].tagIds.Running }],
+        { label: "AIR", colorOn: "#f0b429" },
+      ),
     ],
     connections: [
-      conn("c_mix_1", ta, "side-out", va, "a"),
-      conn("c_mix_2", va, "b", reactor, "in-left"),
-      conn("c_mix_3", tb, "side-out", vb, "a"),
-      conn("c_mix_4", vb, "b", reactor, "in-left-lo"),
-      conn("c_mix_5", reactor, "out-right", outv, "a"),
-      conn("c_mix_6", outv, "b", tc, "side-in"),
+      conn("c_ut_1", "obj_ut_c0", "out", "obj_ut_c1", "in"),
+      conn("c_ut_2", "obj_ut_c1", "out", "obj_ut_c2", "in"),
     ],
   };
 }
 
-/** 3 — boiler / heat loop */
-function screenBoiler(): Screen {
-  const pump = sid("obj_boil_pump");
-  const hex = sid("obj_boil_hex");
-  const fv = sid("obj_boil_fv");
-  const vessel = sid("obj_boil_vessel");
-  const xv = sid("obj_boil_xv");
-
+function screenLoops(
+  pids: UdtInstance[],
+  temps: UdtInstance[],
+  flows: UdtInstance[],
+  reactors: UdtInstance[],
+  vessels: UdtInstance[],
+  auto: UdtInstance,
+): Screen {
   return {
-    id: sid("scr_boiler"),
-    name: "03 — Boiler Loop",
+    id: sid("scr_loops"),
+    name: "14 — Control Loops",
     width: 1280,
     height: 720,
     objects: [
-      obj(pump, "pump", "P-02", 100, 300, 100, 84, [{ prop: "running", tagId: "tag_pump2_run" }]),
-      obj(hex, "heat-exchanger", "HE-01", 320, 280, 150, 110, [{ prop: "duty", tagId: "tag_hex_duty" }]),
-      obj(fv, "control-valve", "FV-01", 560, 290, 80, 96, [{ prop: "position", tagId: "tag_valve_pos" }]),
-      obj(vessel, "vessel", "DRUM-01", 740, 300, 180, 90, [{ prop: "level", tagId: "tag_vessel_lvl" }]),
-      obj(xv, "valve", "XV-RET", 100, 480, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
-      obj(sid("obj_boil_pi"), "gauge", "PI-201", 740, 120, 110, 110, [{ prop: "value", tagId: "tag_pressure" }], { min: 0, max: 10, unit: "bar" }),
-      obj(sid("obj_boil_spark"), "sparkline", "Duty Trend", 320, 120, 160, 64, [{ prop: "value", tagId: "tag_hex_duty" }], { min: 0, max: 100 }),
-      obj(sid("obj_boil_pid"), "pid-face", "PIC-101", 1040, 120, 170, 120, [
-        { prop: "pv", tagId: "tag_pid_pv" },
-        { prop: "sp", tagId: "tag_pid_sp" },
-        { prop: "out", tagId: "tag_pid_out" },
-      ]),
-      obj(sid("obj_boil_tic"), "temp-face", "TIC-101", 1040, 280, 170, 130, [
-        { prop: "pv", tagId: "tag_temp_pv" },
-        { prop: "sp", tagId: "tag_temp_sp" },
-        { prop: "out", tagId: "tag_temp_out" },
-      ], { unit: "°C" }),
-      obj(sid("obj_boil_valveface"), "valve-face", "FV-01", 1040, 450, 170, 130, [
-        { prop: "open", tagId: "tag_valve_open" },
-        { prop: "position", tagId: "tag_valve_pos" },
-      ]),
-      obj(sid("obj_boil_sp"), "setpoint", "SP", 560, 120, 130, 64, [{ prop: "value", tagId: "tag_pid_sp" }], { unit: "%" }),
+      obj(sid("txt_lp"), "text", "CONTROL LOOPS & FACEPLATES", 40, 24, 480, 32, [], {
+        label: "CONTROL LOOPS & FACEPLATES",
+        fontSize: 22,
+      }),
+      fromInst(pids[0], "pid-face", sid("obj_lp_p0"), 40, 90, 170, 120),
+      fromInst(pids[1], "pid-face", sid("obj_lp_p1"), 240, 90, 170, 120),
+      fromInst(pids[2], "pid-face", sid("obj_lp_p2"), 440, 90, 170, 120),
+      fromInst(temps[0], "temp-face", sid("obj_lp_t0"), 640, 90, 170, 130),
+      fromInst(temps[1], "temp-face", sid("obj_lp_t1"), 840, 90, 170, 130),
+      fromInst(flows[0], "flow-face", sid("obj_lp_f0"), 40, 280, 170, 120),
+      fromInst(flows[1], "flow-face", sid("obj_lp_f1"), 240, 280, 170, 120),
+      fromInst(reactors[0], "reactor", sid("obj_lp_r0"), 480, 260, 140, 170),
+      fromInst(vessels[0], "vessel", sid("obj_lp_v0"), 700, 300, 180, 90),
+      obj(
+        sid("obj_lp_mode"),
+        "selector",
+        "MODE",
+        980,
+        120,
+        120,
+        52,
+        [{ prop: "auto", tagId: auto.tagIds.State }],
+      ),
+      obj(
+        sid("obj_lp_sp"),
+        "setpoint",
+        "SP",
+        980,
+        200,
+        130,
+        64,
+        [{ prop: "value", tagId: pids[0].tagIds.SP }],
+        { unit: "%" },
+      ),
+      obj(sid("txt_lp_help"), "text", "help", 980, 300, 240, 80, [], {
+        label: "All points from UDTs.\nClick equipment for control popup.\nHistorian samples to SQL.",
+        fontSize: 12,
+        color: "#93a0b5",
+      }),
     ],
-    connections: [
-      conn("c_boil_1", pump, "discharge", hex, "hot-in"),
-      conn("c_boil_2", hex, "hot-out", fv, "a"),
-      conn("c_boil_3", fv, "b", vessel, "in"),
-      conn("c_boil_4", vessel, "out", xv, "b"),
-      conn("c_boil_5", xv, "a", pump, "suction"),
-    ],
+    connections: [],
   };
 }
 
-/** 4 — packaging / drive line */
-function screenPackaging(): Screen {
-  const blower = sid("obj_pack_blower");
-  const filter = sid("obj_pack_filter");
-  const comp = sid("obj_pack_comp");
-  const cvy1 = sid("obj_pack_cvy1");
-  const cvy2 = sid("obj_pack_cvy2");
-
+function screenTagBoard(pumps: UdtInstance[], valves: UdtInstance[]): Screen {
+  // Compact overview showing first 10 pump + valve status lamps + numerics
+  const objects: ScreenObject[] = [
+    obj(sid("txt_tb"), "text", "LIVE TAG BOARD", 40, 20, 360, 32, [], {
+      label: "LIVE TAG BOARD — sample of UDT tags",
+      fontSize: 22,
+    }),
+  ];
+  for (let i = 0; i < 10; i++) {
+    const y = 70 + i * 58;
+    objects.push(
+      obj(
+        sid(`obj_tb_plamp_${i}`),
+        "lamp",
+        pumps[i].instanceName,
+        40,
+        y,
+        56,
+        56,
+        [{ prop: "on", tagId: pumps[i].tagIds.Running }],
+        { label: pumps[i].instanceName },
+      ),
+    );
+    objects.push(
+      obj(
+        sid(`obj_tb_pflow_${i}`),
+        "numeric",
+        "Flow",
+        120,
+        y + 4,
+        150,
+        48,
+        [{ prop: "value", tagId: pumps[i].tagIds.Flow }],
+        { label: `${pumps[i].instanceName} Flow`, decimals: 1, unit: "m³/h" },
+      ),
+    );
+    objects.push(
+      obj(
+        sid(`obj_tb_vlamp_${i}`),
+        "lamp",
+        valves[i].instanceName,
+        320,
+        y,
+        56,
+        56,
+        [{ prop: "on", tagId: valves[i].tagIds.Open }],
+        { label: valves[i].instanceName, colorOn: "#f0b429" },
+      ),
+    );
+    objects.push(
+      obj(
+        sid(`obj_tb_vpos_${i}`),
+        "numeric",
+        "Pos",
+        400,
+        y + 4,
+        140,
+        48,
+        [{ prop: "value", tagId: valves[i].tagIds.Position }],
+        { label: `${valves[i].instanceName} Pos`, decimals: 0, unit: "%" },
+      ),
+    );
+  }
   return {
-    id: sid("scr_pack"),
-    name: "04 — Packaging Line",
+    id: sid("scr_tag_board"),
+    name: "15 — Live Tag Board",
     width: 1280,
     height: 720,
-    objects: [
-      obj(blower, "blower", "B-01", 80, 120, 100, 88, [{ prop: "running", tagId: "tag_blower_run" }]),
-      obj(filter, "filter", "F-AIR", 260, 130, 88, 72, [{ prop: "dp", tagId: "tag_filter_dp" }]),
-      obj(comp, "compressor", "K-01", 430, 120, 110, 90, [
-        { prop: "running", tagId: "tag_comp_run" },
-        { prop: "load", tagId: "tag_comp_load" },
-      ]),
-      obj(cvy1, "conveyor", "CVY-01", 80, 360, 220, 56, [{ prop: "running", tagId: "tag_conveyor" }]),
-      obj(cvy2, "conveyor", "CVY-02", 360, 360, 220, 56, [{ prop: "running", tagId: "tag_pump_run" }]),
-      obj(sid("obj_pack_motor"), "motor", "M-01", 660, 340, 110, 80, [
-        { prop: "running", tagId: "tag_conveyor" },
-        { prop: "speed", tagId: "tag_motor_speed" },
-      ]),
-      obj(sid("obj_pack_lamp1"), "lamp", "RUN", 820, 120, 64, 64, [{ prop: "on", tagId: "tag_conveyor" }], { colorOn: "#3ddc97" }),
-      obj(sid("obj_pack_lamp2"), "lamp", "AIR", 920, 120, 64, 64, [{ prop: "on", tagId: "tag_blower_run" }], { colorOn: "#f0b429" }),
-      obj(sid("obj_pack_btn"), "button", "START", 820, 220, 96, 48),
-      obj(sid("obj_pack_toggle"), "toggle", "AUTO", 940, 220, 88, 48, [{ prop: "state", tagId: "tag_mode_auto" }]),
-      obj(sid("obj_pack_motorface"), "motor-face", "MTR-01", 1040, 100, 180, 140, [
-        { prop: "running", tagId: "tag_conveyor" },
-        { prop: "speed", tagId: "tag_motor_speed" },
-        { prop: "amps", tagId: "tag_motor_amps" },
-      ]),
-      obj(sid("obj_pack_vfd"), "vfd-face", "VFD-01", 1040, 280, 180, 150, [
-        { prop: "running", tagId: "tag_conveyor" },
-        { prop: "hz", tagId: "tag_vfd_hz" },
-        { prop: "amps", tagId: "tag_motor_amps" },
-        { prop: "torque", tagId: "tag_vfd_torque" },
-      ]),
-      obj(sid("obj_pack_bar"), "bar", "LOAD", 660, 120, 48, 140, [{ prop: "value", tagId: "tag_comp_load" }]),
-    ],
-    connections: [
-      conn("c_pack_1", blower, "out", filter, "in"),
-      conn("c_pack_2", filter, "out", comp, "in"),
-      conn("c_pack_3", cvy1, "out", cvy2, "in"),
-    ],
+    objects,
+    connections: [],
   };
 }
 
-/** 5 — faceplate overview wall + mini process */
-function screenOverview(): Screen {
-  const tank = sid("obj_ov_tank");
-  const pump = sid("obj_ov_pump");
-  const valve = sid("obj_ov_valve");
-  const vessel = sid("obj_ov_vessel");
-
-  return {
-    id: sid("scr_overview"),
-    name: "05 — Faceplate Overview",
-    width: 1280,
-    height: 720,
-    objects: [
-      // Mini process strip across the top — aligned horizontally
-      obj(tank, "tank", "TK-01", 60, 40, 100, 140, [{ prop: "level", tagId: "tag_tank_a" }]),
-      obj(pump, "pump", "P-01", 240, 80, 96, 80, [{ prop: "running", tagId: "tag_pump_run" }]),
-      obj(valve, "control-valve", "FV-01", 400, 70, 80, 96, [{ prop: "position", tagId: "tag_valve_pos" }]),
-      obj(vessel, "vessel", "V-01", 560, 90, 180, 80, [{ prop: "level", tagId: "tag_vessel_lvl" }]),
-      obj(sid("obj_ov_flow"), "flow-face", "FIC-01", 800, 40, 170, 120, [
-        { prop: "rate", tagId: "tag_flow" },
-        { prop: "total", tagId: "tag_flow_total" },
-      ]),
-      obj(sid("obj_ov_ready"), "lamp", "OK", 1020, 60, 64, 64, [{ prop: "on", tagId: "tag_hs_ready" }]),
-
-      // Faceplate wall
-      obj(sid("obj_ov_pid"), "pid-face", "PIC-101", 60, 260, 170, 120, [
-        { prop: "pv", tagId: "tag_pid_pv" },
-        { prop: "sp", tagId: "tag_pid_sp" },
-        { prop: "out", tagId: "tag_pid_out" },
-      ]),
-      obj(sid("obj_ov_temp"), "temp-face", "TIC-101", 260, 260, 170, 130, [
-        { prop: "pv", tagId: "tag_temp_pv" },
-        { prop: "sp", tagId: "tag_temp_sp" },
-        { prop: "out", tagId: "tag_temp_out" },
-      ], { unit: "°C" }),
-      obj(sid("obj_ov_motor"), "motor-face", "MTR-101", 460, 260, 180, 140, [
-        { prop: "running", tagId: "tag_pump_run" },
-        { prop: "speed", tagId: "tag_motor_speed" },
-        { prop: "amps", tagId: "tag_motor_amps" },
-      ]),
-      obj(sid("obj_ov_pump"), "pump-face", "PMP-101", 670, 260, 180, 140, [
-        { prop: "running", tagId: "tag_pump_run" },
-        { prop: "flow", tagId: "tag_flow" },
-        { prop: "pressure", tagId: "tag_pressure" },
-      ]),
-      obj(sid("obj_ov_valve"), "valve-face", "VLV-101", 880, 260, 170, 130, [
-        { prop: "open", tagId: "tag_valve_open" },
-        { prop: "position", tagId: "tag_valve_pos" },
-      ]),
-      obj(sid("obj_ov_tankface"), "tank-face", "TK-101", 1080, 260, 170, 150, [
-        { prop: "level", tagId: "tag_tank_a" },
-        { prop: "hi", tagId: "tag_alarm_hi" },
-      ]),
-      obj(sid("obj_ov_vfd"), "vfd-face", "VFD-101", 60, 460, 180, 150, [
-        { prop: "running", tagId: "tag_conveyor" },
-        { prop: "hz", tagId: "tag_vfd_hz" },
-        { prop: "amps", tagId: "tag_motor_amps" },
-        { prop: "torque", tagId: "tag_vfd_torque" },
-      ]),
-      obj(sid("obj_ov_spark"), "sparkline", "PV Trend", 280, 500, 180, 64, [{ prop: "value", tagId: "tag_pid_pv" }]),
-      obj(sid("obj_ov_alarm"), "alarm-banner", "PLANT", 500, 510, 220, 48, [{ prop: "active", tagId: "tag_alarm_hi" }], { message: "High tank level" }),
-      obj(sid("obj_ov_mode"), "selector", "MODE", 760, 510, 120, 52, [{ prop: "auto", tagId: "tag_mode_auto" }]),
-    ],
-    connections: [
-      conn("c_ov_1", tank, "side-out", pump, "suction"),
-      conn("c_ov_2", pump, "discharge", valve, "a"),
-      conn("c_ov_3", valve, "b", vessel, "in"),
-    ],
-  };
-}
-
-export function createDemoScreens(): Screen[] {
+export function createDemoScreensFromPlant(
+  plant: ReturnType<typeof buildPlant>,
+): Screen[] {
+  const { instances: i } = plant;
+  // Keep earlier polished screens lightly by regenerating process-focused ones
   return [
-    screenIntake(),
-    screenMixing(),
-    screenBoiler(),
-    screenPackaging(),
-    screenOverview(),
+    screenProcessTrain(
+      i.tanks,
+      i.pumps,
+      i.valves,
+      i.filters,
+      i.flows,
+      i.discretes[0],
+    ),
+    screenPumpFarm(i.pumps, i.valves),
+    screenValveGallery(i.valves, i.controlValves),
+    screenUtility(
+      i.blowers,
+      i.compressors,
+      i.hexes,
+      i.conveyors,
+      i.motors,
+      i.vfds,
+    ),
+    screenLoops(
+      i.pids,
+      i.temps,
+      i.flows,
+      i.reactors,
+      i.vessels,
+      i.discretes[1],
+    ),
+    screenTagBoard(i.pumps, i.valves),
   ];
 }
 
 export function createInitialProject(): ProjectState {
-  const screens = createDemoScreens();
+  const plant = buildPlant();
+  const screens = createDemoScreensFromPlant(plant);
   return {
-    name: "SCADA One Demo",
-    version: 2,
-    tags: createSeedTags(),
+    name: "SCADA One Plant",
+    version: 3,
+    tags: plant.tags,
     screens,
     activeScreenId: screens[0].id,
     runtimeScreenId: screens[0].id,
@@ -664,3 +604,5 @@ export function createInitialProject(): ProjectState {
 export function newId(prefix: string) {
   return `${prefix}_${crypto.randomUUID().slice(0, 8)}`;
 }
+
+export { buildPlant as getPlantBlueprint };

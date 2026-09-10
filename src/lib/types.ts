@@ -37,6 +37,8 @@ export interface Tag {
   timestamp: number;
   source: TagSource;
   sim?: SimConfig;
+  /** When true, simulation will not overwrite operator writes */
+  manualHold?: boolean;
   /** Optional alarm stubs for later */
   hiLimit?: number;
   loLimit?: number;
@@ -155,9 +157,11 @@ export interface OpcUaConfig {
 
 export type AppTab =
   | "library"
+  | "udts"
   | "tags"
   | "designer"
   | "runtime"
+  | "historian"
   | "opcua";
 
 export interface ProjectState {

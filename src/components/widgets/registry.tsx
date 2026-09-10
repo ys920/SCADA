@@ -204,9 +204,18 @@ export function ButtonWidget({ obj, tags, interactive, onWrite }: WidgetProps) {
       className={`widget-button ${pressed ? "is-pressed" : ""}`}
       style={shellStyle()}
       disabled={!interactive || !binding}
-      onMouseDown={() => binding && onWrite?.(binding.tagId, true)}
-      onMouseUp={() => binding && onWrite?.(binding.tagId, false)}
-      onMouseLeave={() => binding && pressed && onWrite?.(binding.tagId, false)}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (binding) onWrite?.(binding.tagId, true);
+      }}
+      onMouseUp={(e) => {
+        e.stopPropagation();
+        if (binding) onWrite?.(binding.tagId, false);
+      }}
+      onMouseLeave={() => {
+        if (binding && pressed) onWrite?.(binding.tagId, false);
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       {label}
     </button>
@@ -223,7 +232,10 @@ export function ToggleWidget({ obj, tags, interactive, onWrite }: WidgetProps) {
       className={`widget-toggle ${state ? "is-on" : ""}`}
       style={shellStyle()}
       disabled={!interactive || !binding}
-      onClick={() => binding && onWrite?.(binding.tagId, !state)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (binding) onWrite?.(binding.tagId, !state);
+      }}
     >
       <span className="toggle-knob" />
       <span>{label}</span>
@@ -434,6 +446,35 @@ export function ConveyorWidget({ obj, tags }: WidgetProps) {
   );
 }
 
+export function TextWidget({ obj, tags }: WidgetProps) {
+  const bound = boundValue(obj, "text", tags, undefined);
+  const label = String(
+    bound !== undefined && bound !== null && String(bound).length > 0
+      ? bound
+      : (obj.props.label ?? obj.name),
+  );
+  const fontSize = asNumber(obj.props.fontSize, 14);
+  const color = String(obj.props.color ?? "#e8eef7");
+  return (
+    <div
+      style={{
+        ...shellStyle(),
+        fontSize,
+        color,
+        whiteSpace: "pre-wrap",
+        lineHeight: 1.35,
+        display: "flex",
+        alignItems: "center",
+        fontFamily: "var(--font-display)",
+        fontWeight: fontSize >= 20 ? 700 : 500,
+      }}
+      className="widget-text"
+    >
+      {label}
+    </div>
+  );
+}
+
 export function SparklineWidget({ obj, tags }: WidgetProps) {
   const value = asNumber(boundValue(obj, "value", tags, 0), 0);
   const min = asNumber(obj.props.min, 0);
@@ -502,7 +543,10 @@ export function SelectorWidget({
       className={`widget-selector ${auto ? "is-auto" : ""}`}
       style={shellStyle()}
       disabled={!interactive || !binding}
-      onClick={() => binding && onWrite?.(binding.tagId, !auto)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (binding && onWrite) onWrite(binding.tagId, !auto);
+      }}
     >
       <span className="widget-label tight">{label}</span>
       <strong>{auto ? "AUTO" : "MAN"}</strong>
@@ -719,6 +763,7 @@ const REGISTRY: Record<string, (props: WidgetProps) => ReactElement> = {
   numeric: NumericWidget,
   lamp: LampWidget,
   bar: BarWidget,
+  text: TextWidget,
   sparkline: SparklineWidget,
   "alarm-banner": AlarmBannerWidget,
   button: ButtonWidget,

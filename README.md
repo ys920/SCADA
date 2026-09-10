@@ -1,43 +1,52 @@
 # SCADA One
 
-Browser-based SCADA/HMI platform: **Library**, **Tags**, **Designer**, **Runtime**, and **OPC UA** configuration.
-
-Phase 1 ships a complete engineering + operator shell with a **simulation tag engine**. Real OPC UA I/O is designed for a companion gateway (Phase 2); the web app is ready for **Vercel**.
+Browser-based SCADA/HMI with **UDTs**, large simulated plant, control popups, and a **SQL historian** (Neon Postgres).
 
 ## Quick start
 
 ```bash
 npm install
+cp .env.example .env.local   # set DATABASE_URL for historian
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Click **Reset** after upgrades to load the latest seed.
 
 ## Tabs
 
-| Tab | What it does |
-|-----|----------------|
-| Library | Industrial templates (tank, valve, pump, gauges, PID faceplate, …) |
-| Tags | Master tag list with live sim values and profile editors |
-| Designer | Create screens, place templates, bind tags, draw connections |
-| Runtime | Live operator view of screens |
-| OPC UA | Endpoint + security + node→tag mappings (simulated connect for now) |
+| Tab | Purpose |
+|-----|---------|
+| Library | Widget templates (process, indicators, controls, faceplates, text) |
+| UDTs | Equipment type definitions (PumpUDT, ValveUDT, …) |
+| Tags | Live tag database (unique names from UDT instances) |
+| Designer | Screens, place templates, bind tags, orthogonal pipes |
+| Runtime | Live HMI — click object for control popup |
+| Historian | SQL time-series query / manual flush |
+| OPC UA | Endpoint + mappings (sim connect for now) |
 
-## Deploy on Vercel
+## Plant seed (v3)
 
-1. Push this repo to GitHub.
-2. Import the project in [Vercel](https://vercel.com/new) — framework preset **Next.js**.
-3. Build command: `npm run build` (default). No env vars required for Phase 1.
+- **20 pumps** (`P_01`…`P_20`) via PumpUDT  
+- **20 valves** (`XV_01`…`XV_20`) via ValveUDT  
+- Plus control valves, tanks, motors, blowers, compressors, filters, HEX, conveyors, PID/temp/flow loops, VFDs, reactor, vessels, HS discretes  
+- Screens: Process Train, Pump Farm, Valve Gallery, Utilities & Pack, Control Loops, Live Tag Board  
 
-See [docs/PROJECT_PLAN.md](docs/PROJECT_PLAN.md) for architecture, data model, and roadmap.
+## SQL Historian
 
-## Stack
+- Neon Postgres table `historian_samples`  
+- Auto-sample every 5s while Sim RUN (key PV/status tags)  
+- API: `/api/historian/ingest`, `/query`, `/status`  
+- Set `DATABASE_URL` in `.env.local` and in Vercel project settings  
 
-- Next.js (App Router) + React 19 + TypeScript + Tailwind CSS 4
-- Zustand (persisted project state in `localStorage`)
-- Client-side simulation ticker (~500 ms)
+## Vercel
 
-## Extending the library
+1. Import the GitHub repo (Next.js)  
+2. Add env `DATABASE_URL` (Neon connection string)  
+3. Deploy  
 
-1. Add an entry in `src/lib/library-catalog.ts`
-2. Add a renderer in `src/components/widgets/registry.tsx`
+## Extending
+
+1. Add UDT members in `src/lib/udt.ts`  
+2. Add library item in `src/lib/library-catalog.ts`  
+3. Add widget renderer in `src/components/widgets/registry.tsx`  
+4. Instantiate in `src/lib/seed.ts`  

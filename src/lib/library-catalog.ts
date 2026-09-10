@@ -310,6 +310,17 @@ export const LIBRARY_CATALOG: LibraryItem[] = [
     defaultProps: { label: "LI", min: 0, max: 100 },
   },
   {
+    id: "text",
+    category: "indicators",
+    name: "Text Label",
+    description: "Static or bound text annotation on a screen.",
+    defaultWidth: 160,
+    defaultHeight: 32,
+    ports: [],
+    bindableProps: [{ key: "text", label: "Text", dataType: "string" }],
+    defaultProps: { label: "Label", fontSize: 14, color: "#e8eef7" },
+  },
+  {
     id: "sparkline",
     category: "indicators",
     name: "Sparkline Trend",
