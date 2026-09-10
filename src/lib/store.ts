@@ -19,6 +19,8 @@ import type {
 interface UiSlice {
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
+  controlObjectId: string | null;
+  setControlObjectId: (id: string | null) => void;
 }
 
 interface ProjectActions {
@@ -31,6 +33,8 @@ interface ProjectActions {
   deleteTag: (id: string) => void;
   addTag: (partial?: Partial<Tag>) => void;
   writeTagValue: (id: string, value: boolean | number | string) => void;
+  releaseTagManual: (id: string) => void;
+  releaseObjectManual: (objectId: string) => void;
 
   // Screens
   addScreen: (name?: string) => void;
@@ -75,13 +79,16 @@ export const useScadaStore = create<Store>()(
     (set, get) => ({
       ...createInitialProject(),
       activeTab: "runtime",
+      controlObjectId: null,
 
       setActiveTab: (tab) => set({ activeTab: tab }),
+      setControlObjectId: (controlObjectId) => set({ controlObjectId }),
 
       resetProject: () =>
         set({
           ...createInitialProject(),
           activeTab: get().activeTab,
+          controlObjectId: null,
         }),
 
       tickSim: () => {
@@ -128,10 +135,37 @@ export const useScadaStore = create<Store>()(
         set((s) => ({
           tags: s.tags.map((t) =>
             t.id === id
-              ? { ...t, value, timestamp: Date.now(), quality: "good" as const }
+              ? {
+                  ...t,
+                  value,
+                  timestamp: Date.now(),
+                  quality: "good" as const,
+                  manualHold: true,
+                }
               : t,
           ),
         })),
+
+      releaseTagManual: (id) =>
+        set((s) => ({
+          tags: s.tags.map((t) =>
+            t.id === id ? { ...t, manualHold: false } : t,
+          ),
+        })),
+
+      releaseObjectManual: (objectId) => {
+        const screen =
+          get().screens.find((sc) => sc.id === get().runtimeScreenId) ??
+          get().screens.find((sc) => sc.id === get().activeScreenId);
+        const obj = screen?.objects.find((o) => o.id === objectId);
+        if (!obj) return;
+        const ids = new Set(obj.bindings.map((b) => b.tagId));
+        set((s) => ({
+          tags: s.tags.map((t) =>
+            ids.has(t.id) ? { ...t, manualHold: false } : t,
+          ),
+        }));
+      },
 
       addScreen: (name) => {
         const screen: Screen = {
@@ -173,7 +207,7 @@ export const useScadaStore = create<Store>()(
       setActiveScreen: (id) =>
         set({ activeScreenId: id, selectedObjectId: null, connectFrom: null }),
 
-      setRuntimeScreen: (id) => set({ runtimeScreenId: id }),
+      setRuntimeScreen: (id) => set({ runtimeScreenId: id, controlObjectId: null }),
 
       setDesignerMode: (designerMode) =>
         set({ designerMode, connectFrom: null }),
@@ -209,16 +243,15 @@ export const useScadaStore = create<Store>()(
 
       updateObject: (id, patch) =>
         set((s) => ({
-          screens: s.screens.map((sc) =>
-            sc.id !== s.activeScreenId
-              ? sc
-              : {
-                  ...sc,
-                  objects: sc.objects.map((o) =>
-                    o.id === id ? { ...o, ...patch } : o,
-                  ),
-                },
-          ),
+          screens: s.screens.map((sc) => {
+            if (!sc.objects.some((o) => o.id === id)) return sc;
+            return {
+              ...sc,
+              objects: sc.objects.map((o) =>
+                o.id === id ? { ...o, ...patch } : o,
+              ),
+            };
+          }),
         })),
 
       deleteObject: (id) =>

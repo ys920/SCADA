@@ -204,9 +204,18 @@ export function ButtonWidget({ obj, tags, interactive, onWrite }: WidgetProps) {
       className={`widget-button ${pressed ? "is-pressed" : ""}`}
       style={shellStyle()}
       disabled={!interactive || !binding}
-      onMouseDown={() => binding && onWrite?.(binding.tagId, true)}
-      onMouseUp={() => binding && onWrite?.(binding.tagId, false)}
-      onMouseLeave={() => binding && pressed && onWrite?.(binding.tagId, false)}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+        if (binding) onWrite?.(binding.tagId, true);
+      }}
+      onMouseUp={(e) => {
+        e.stopPropagation();
+        if (binding) onWrite?.(binding.tagId, false);
+      }}
+      onMouseLeave={() => {
+        if (binding && pressed) onWrite?.(binding.tagId, false);
+      }}
+      onClick={(e) => e.stopPropagation()}
     >
       {label}
     </button>
@@ -223,7 +232,10 @@ export function ToggleWidget({ obj, tags, interactive, onWrite }: WidgetProps) {
       className={`widget-toggle ${state ? "is-on" : ""}`}
       style={shellStyle()}
       disabled={!interactive || !binding}
-      onClick={() => binding && onWrite?.(binding.tagId, !state)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (binding) onWrite?.(binding.tagId, !state);
+      }}
     >
       <span className="toggle-knob" />
       <span>{label}</span>
@@ -502,7 +514,10 @@ export function SelectorWidget({
       className={`widget-selector ${auto ? "is-auto" : ""}`}
       style={shellStyle()}
       disabled={!interactive || !binding}
-      onClick={() => binding && onWrite?.(binding.tagId, !auto)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (binding && onWrite) onWrite(binding.tagId, !auto);
+      }}
     >
       <span className="widget-label tight">{label}</span>
       <strong>{auto ? "AUTO" : "MAN"}</strong>
