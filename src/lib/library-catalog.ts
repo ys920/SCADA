@@ -17,6 +17,13 @@ export const LIBRARY_CATALOG: LibraryItem[] = [
     ports: [
       { id: "in-top", name: "Inlet", side: "top", offset: 0.5, direction: "in" },
       {
+        id: "side-in",
+        name: "Side in",
+        side: "left",
+        offset: 0.55,
+        direction: "in",
+      },
+      {
         id: "out-bottom",
         name: "Outlet",
         side: "bottom",
@@ -27,7 +34,7 @@ export const LIBRARY_CATALOG: LibraryItem[] = [
         id: "side-out",
         name: "Side out",
         side: "right",
-        offset: 0.7,
+        offset: 0.55,
         direction: "out",
       },
     ],
@@ -207,6 +214,20 @@ export const LIBRARY_CATALOG: LibraryItem[] = [
     ports: [
       { id: "in-top", name: "Feed", side: "top", offset: 0.5, direction: "in" },
       {
+        id: "in-left",
+        name: "Side feed",
+        side: "left",
+        offset: 0.35,
+        direction: "in",
+      },
+      {
+        id: "in-left-lo",
+        name: "Side feed lo",
+        side: "left",
+        offset: 0.65,
+        direction: "in",
+      },
+      {
         id: "out-bottom",
         name: "Product",
         side: "bottom",
@@ -214,11 +235,11 @@ export const LIBRARY_CATALOG: LibraryItem[] = [
         direction: "out",
       },
       {
-        id: "jacket",
-        name: "Jacket",
+        id: "out-right",
+        name: "Side out",
         side: "right",
         offset: 0.5,
-        direction: "bidirectional",
+        direction: "out",
       },
     ],
     bindableProps: [

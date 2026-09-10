@@ -413,7 +413,7 @@ function screenIntake(): Screen {
       conn("c_intake_2", filter, "out", pump, "suction"),
       conn("c_intake_3", pump, "discharge", check, "a"),
       conn("c_intake_4", check, "b", valve, "a"),
-      conn("c_intake_5", valve, "b", tankB, "in-top"),
+      conn("c_intake_5", valve, "b", tankB, "side-in"),
     ],
   };
 }
@@ -443,7 +443,7 @@ function screenMixing(): Screen {
         { prop: "temp", tagId: "tag_reactor_temp" },
         { prop: "agitating", tagId: "tag_agitator" },
       ]),
-      obj(outv, "valve", "XV-OUT", 720, 280, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
+      obj(outv, "valve", "XV-OUT", 720, 265, 72, 72, [{ prop: "open", tagId: "tag_valve_open" }]),
       obj(tc, "tank", "PROD", 880, 220, 120, 170, [{ prop: "level", tagId: "tag_tank_c" }]),
       obj(sid("obj_mix_tempface"), "temp-face", "TIC-101", 1080, 120, 170, 130, [
         { prop: "pv", tagId: "tag_reactor_temp" },
@@ -455,11 +455,11 @@ function screenMixing(): Screen {
     ],
     connections: [
       conn("c_mix_1", ta, "side-out", va, "a"),
-      conn("c_mix_2", va, "b", reactor, "in-top"),
+      conn("c_mix_2", va, "b", reactor, "in-left"),
       conn("c_mix_3", tb, "side-out", vb, "a"),
-      conn("c_mix_4", vb, "b", reactor, "jacket"),
-      conn("c_mix_5", reactor, "out-bottom", outv, "a"),
-      conn("c_mix_6", outv, "b", tc, "side-out"),
+      conn("c_mix_4", vb, "b", reactor, "in-left-lo"),
+      conn("c_mix_5", reactor, "out-right", outv, "a"),
+      conn("c_mix_6", outv, "b", tc, "side-in"),
     ],
   };
 }

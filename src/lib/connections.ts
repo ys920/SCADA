@@ -75,7 +75,10 @@ export function orthogonalPath(
     .join(" ");
 }
 
-export function connectionSvgPaths(screen: Screen): { id: string; d: string }[] {
+/** Render solid pipe + optional animated flow overlay. */
+export function connectionSvgPaths(
+  screen: Screen,
+): { id: string; d: string }[] {
   return screen.connections
     .map((c) => {
       const fromObj = screen.objects.find((o) => o.id === c.from.objectId);

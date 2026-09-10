@@ -67,7 +67,10 @@ export function RuntimeTab() {
             height={screen.height}
           >
             {connectionPaths.map((c) => (
-              <path key={c.id} d={c.d} className="conn-path live" />
+              <g key={c.id}>
+                <path d={c.d} className="conn-path live" />
+                <path d={c.d} className="conn-flow" />
+              </g>
             ))}
           </svg>
           {screen.objects.map((obj) => (
